@@ -13,6 +13,13 @@ def test_home_redirects_anonymous_visitor_to_login():
     assert response.headers["location"] == "/login"
 
 
+def test_every_signed_in_page_is_closed_to_anonymous_visitors():
+    for path in ("/dashboard", "/applications", "/applications/new", "/answers"):
+        response = client.get(path, follow_redirects=False)
+        assert response.status_code == 303, path
+        assert response.headers["location"] == "/login", path
+
+
 def test_login_page_renders():
     response = client.get("/login")
     assert response.status_code == 200

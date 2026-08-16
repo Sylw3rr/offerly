@@ -121,15 +121,71 @@
     .timeline li:last-child { border-bottom: 0; }
     .when { color: var(--muted); margin-right: .6rem; font-variant-numeric: tabular-nums; }
     .back { text-decoration: none; font-size: .9rem; }
+
+    /* Navigation */
+    nav { display: flex; gap: 1.1rem; }
+    nav a { color: var(--muted); text-decoration: none; font-size: .92rem; }
+    nav a:hover { color: var(--ink); }
+    nav a.on { color: var(--ink); font-weight: 550; }
+    .headright { display: flex; align-items: center; gap: 1.4rem; }
+
+    /* Dashboard — what needs attention */
+    .attention { list-style: none; padding: 0; margin: 0; }
+    .attention li { border-bottom: 1px solid var(--line); }
+    .attention li:last-child { border-bottom: 0; }
+    .attention a {
+      display: flex; gap: .8rem; align-items: baseline; flex-wrap: wrap;
+      padding: .7rem .2rem; text-decoration: none; color: inherit;
+    }
+    .attention a:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+    .attention .who { font-weight: 550; }
+    .attention .why { font-size: .9rem; margin-left: auto; white-space: nowrap; }
+    .why.k-missed, .why.k-silent { color: var(--danger); }
+    .why.k-closing { color: #c88a2e; }
+    .why.k-blocked { color: var(--muted); }
+    .clear { color: var(--muted); font-size: .93rem; margin: 0; }
+
+    /* Answers */
+    .answers { display: grid; gap: .8rem; margin: 1.5rem 0; }
+    .answer { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: .9rem 1.1rem; }
+    .answer .top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+    .answer .label { font-weight: 550; }
+    .answer .value { margin: .35rem 0 0; white-space: pre-wrap; font-size: .95rem; }
+    .answer .tools { display: flex; gap: .8rem; align-items: center; }
+    .answer .tools button, .answer .tools summary {
+      background: none; border: 0; color: var(--muted); font-size: .85rem;
+      cursor: pointer; width: auto; margin: 0; padding: 0;
+    }
+    .answer .tools button:hover, .answer .tools summary:hover { color: var(--ink); }
+    .answer details { margin-top: .8rem; }
+    .answer details summary { color: var(--muted); font-size: .85rem; cursor: pointer; }
+    .answer form.edit { margin-top: .6rem; }
+    .answer form.edit button { width: auto; padding: .45rem 1.1rem; margin-top: .8rem; }
+    .copied { color: var(--accent) !important; }
+    .suggest { display: flex; gap: .4rem; flex-wrap: wrap; margin: .5rem 0 0; }
+    .suggest button {
+      border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+      border-radius: 999px; padding: .2rem .7rem; font-size: .84rem;
+      cursor: pointer; width: auto; margin: 0;
+    }
+    .suggest button:hover { border-color: var(--accent); color: var(--accent); filter: none; }
   </style>
 </head>
 <body>
   <header>
     <a class="brand" href="/">Offerly</a>
     {% if user %}
-      <form method="post" action="/logout" style="margin:0">
-        <button class="linkbtn" type="submit">Sign out ({{ user.email }})</button>
-      </form>
+      <div class="headright">
+        <nav>
+          {% set here = request.url.path if request else '' %}
+          <a href="/dashboard" class="{% if here == '/dashboard' %}on{% endif %}">Dashboard</a>
+          <a href="/applications" class="{% if here.startswith('/applications') %}on{% endif %}">Applications</a>
+          <a href="/answers" class="{% if here.startswith('/answers') %}on{% endif %}">Answers</a>
+        </nav>
+        <form method="post" action="/logout" style="margin:0">
+          <button class="linkbtn" type="submit">Sign out</button>
+        </form>
+      </div>
     {% endif %}
   </header>
   {% block body %}{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Answers — Offerly{% endblock %}
+{% block body %}
+<main>
+  <h1>Answers</h1>
+  <p class="hint">
+    The questions every recruitment form asks. Written once, pasted afterwards —
+    so the answer is the same in October as it was in August.
+  </p>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% if answers %}
+    <div class="answers">
+      {% for answer in answers %}
+        <article class="answer">
+          <div class="top">
+            <span class="label">{{ answer.label }}</span>
+            <div class="tools">
+              <button type="button" class="copy" data-answer="{{ answer.id }}">Copy</button>
+              <form method="post" action="/answers/{{ answer.id }}/delete" style="margin:0"
+                    onsubmit="return confirm('Delete “{{ answer.label }}”?')">
+                <button type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
+          <p class="value" id="value-{{ answer.id }}">{{ answer.value }}</p>
+
+          <details>
+            <summary>Edit</summary>
+            <form method="post" action="/answers/{{ answer.id }}" class="edit">
+              <label for="label-{{ answer.id }}">Label</label>
+              <input id="label-{{ answer.id }}" name="label" value="{{ answer.label }}" required>
+              <label for="edit-{{ answer.id }}">Answer</label>
+              <textarea id="edit-{{ answer.id }}" name="value" rows="3" required>{{ answer.value }}</textarea>
+              <button type="submit">Save</button>
+            </form>
+          </details>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">No answers yet. Add the ones you retype most often.</p>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Add an answer</h2>
+    <form method="post" action="/answers">
+      <label for="label">Label</label>
+      <input id="label" name="label" placeholder="Notice period" required>
+      <div class="suggest">
+        {% for suggestion in suggestions %}
+          <button type="button" class="fill" data-label="{{ suggestion }}">{{ suggestion }}</button>
+        {% endfor %}
+      </div>
+      <label for="value">Answer</label>
+      <textarea id="value" name="value" rows="3" required
+                placeholder="One month, ending on the last day of the month."></textarea>
+      <button type="submit">Add</button>
+    </form>
+  </section>
+</main>
+
+<script>
+  // Copy buttons. The clipboard API needs a secure context; when it is missing
+  // the text is selected instead so Ctrl+C still works.
+  document.querySelectorAll("button.copy").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var node = document.getElementById("value-" + button.dataset.answer);
+      var done = function () {
+        button.textContent = "Copied";
+        button.classList.add("copied");
+        setTimeout(function () {
+          button.textContent = "Copy";
+          button.classList.remove("copied");
+        }, 1500);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(node.textContent.trim()).then(done);
+      } else {
+        var range = document.createRange();
+        range.selectNodeContents(node);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    });
+  });
+
+  // Suggested labels only fill the field; nothing is saved until Add is pressed.
+  document.querySelectorAll("button.fill").forEach(function (button) {
+    button.addEventListener("click", function () {
+      document.getElementById("label").value = button.dataset.label;
+      document.getElementById("value").focus();
+    });
+  });
+</script>
+{% endblock %}

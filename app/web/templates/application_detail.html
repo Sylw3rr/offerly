@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_money.html" as money %}
 {% set offer = application.offers %}
 {% block title %}{{ offer.title }} — Offerly{% endblock %}
 {% block body %}
@@ -21,13 +22,15 @@
         <dt>Source</dt><dd>{{ offer.source }}</dd>
         {% if offer.url %}<dt>Link</dt><dd><a href="{{ offer.url }}" target="_blank" rel="noopener">Open offer</a></dd>{% endif %}
         <dt>CV sent</dt><dd>{{ application.documents.label if application.documents else '—' }}</dd>
+        <dt>Advertised</dt>
+        <dd>
+          {{ money.offer_range(offer) | trim or '—' }}
+          {%- if offer.contract %} · {{ offer.contract }}{% endif %}
+        </dd>
         <dt>Declared</dt>
         <dd>
-          {% if application.declared_salary %}
-            {{ application.declared_salary | round | int }}
-            {{ application.declared_salary_kind or '' }}{% if application.declared_salary_period %}/{{ application.declared_salary_period }}{% endif %}
-            {% if application.declared_contract %} · {{ application.declared_contract }}{% endif %}
-          {% else %}—{% endif %}
+          {{ money.declared(application) | trim or '—' }}
+          {%- if application.declared_contract %} · {{ application.declared_contract }}{% endif %}
         </dd>
         <dt>Submitted</dt><dd>{{ application.submitted_at[:10] if application.submitted_at else '—' }}</dd>
         {% if offer.expires_at %}<dt>Offer closes</dt><dd>{{ offer.expires_at }}</dd>{% endif %}

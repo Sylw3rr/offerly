@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Offerly{% endblock %}
+{% block body %}
+<main>
+  <div class="row-between">
+    <h1>Dashboard</h1>
+    <a class="btn" href="/applications/new">Add application</a>
+  </div>
+
+  <section class="panel" style="margin-top:1.5rem">
+    <h2>Needs attention</h2>
+    {% if items %}
+      <ul class="attention">
+        {% for item in items %}
+          <li>
+            <a href="/applications/{{ item.application_id }}">
+              <span class="who">{{ item.company }}</span>
+              <span class="dim">{{ item.title }}</span>
+              <span class="badge s-{{ item.status }}">{{ item.status }}</span>
+              <span class="why k-{{ item.kind }}">{{ item.message }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="clear">
+        Nothing to chase. Applications count as unanswered after
+        {{ ghost_after_days }} days.
+      </p>
+    {% endif %}
+  </section>
+
+  <div class="stats">
+    <div class="stat"><span class="num">{{ stats.total }}</span><span class="lbl">tracked</span></div>
+    <div class="stat"><span class="num">{{ stats.sent }}</span><span class="lbl">sent</span></div>
+    <div class="stat"><span class="num">{{ stats.responded }}</span><span class="lbl">replied</span></div>
+    <div class="stat">
+      <span class="num">{% if stats.response_rate is not none %}{{ stats.response_rate }}%{% else %}—{% endif %}</span>
+      <span class="lbl">response rate</span>
+    </div>
+    <div class="stat">
+      <span class="num">{{ stats.by_status.get('interview', 0) }}</span>
+      <span class="lbl">interviews</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <h2>Recent activity</h2>
+    {% if events %}
+      <ul class="timeline">
+        {% for event in events %}
+          {% set application = event.applications %}
+          {% set offer = application.offers if application else none %}
+          <li>
+            <span class="when">{{ event.created_at[:10] }}</span>
+            {% if offer %}
+              <a href="/applications/{{ application.id }}">
+                {{ offer.companies.name if offer.companies else '—' }} · {{ offer.title }}
+              </a>
+            {% endif %}
+            <span class="dim">
+              {% if event.from_status %}{{ event.from_status }} → {% endif %}{{ event.to_status }}
+            </span>
+            {% if event.note %}<div class="dim">{{ event.note }}</div>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="clear">No activity yet. <a href="/applications/new">Record the first application.</a></p>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

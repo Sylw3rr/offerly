@@ -51,6 +51,45 @@
     </fieldset>
 
     <fieldset>
+      <legend>Advertised range</legend>
+      <p class="hint">What the offer said, if it said anything. Leave blank when it did not.</p>
+      <div class="grid4">
+        <div>
+          <label for="salary_min">From</label>
+          <input id="salary_min" name="salary_min" inputmode="decimal" placeholder="8000">
+        </div>
+        <div>
+          <label for="salary_max">To</label>
+          <input id="salary_max" name="salary_max" inputmode="decimal" placeholder="12000">
+        </div>
+        <div>
+          <label for="salary_currency">Currency</label>
+          <select id="salary_currency" name="salary_currency">
+            {% for v, l in currencies %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="salary_kind">Gross / net</label>
+          <select id="salary_kind" name="salary_kind">
+            {% for v, l in salary_kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="salary_period">Per</label>
+          <select id="salary_period" name="salary_period">
+            {% for v, l in salary_periods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="contract">Contract offered</label>
+          <select id="contract" name="contract">
+            {% for v, l in contracts %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
       <legend>What you sent</legend>
       <div class="grid2">
         <div>

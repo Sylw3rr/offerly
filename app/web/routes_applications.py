@@ -52,6 +52,7 @@ CONTRACTS = [
     ("internship", "Internship"),
     ("other", "Other"),
 ]
+CURRENCIES = [("PLN", "PLN"), ("EUR", "EUR"), ("USD", "USD"), ("GBP", "GBP")]
 
 FORM_CHOICES = {
     "statuses": APPLICATION_STATUSES,
@@ -61,7 +62,19 @@ FORM_CHOICES = {
     "salary_kinds": SALARY_KINDS,
     "salary_periods": SALARY_PERIODS,
     "contracts": CONTRACTS,
+    "currencies": CURRENCIES,
 }
+
+
+def _amount(text: str) -> float | None:
+    """Read a money field typed by hand: blank, comma decimals, stray spaces."""
+    cleaned = text.replace(" ", "").replace(" ", "").replace(",", ".")
+    if not cleaned:
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
 
 
 @router.get("/applications", response_class=HTMLResponse)
@@ -105,6 +118,12 @@ def create_application(
     mode: str = Form(""),
     level: str = Form(""),
     expires_at: str = Form(""),
+    salary_min: str = Form(""),
+    salary_max: str = Form(""),
+    salary_currency: str = Form("PLN"),
+    salary_kind: str = Form(""),
+    salary_period: str = Form(""),
+    contract: str = Form(""),
     cv_document_id: str = Form(""),
     declared_salary: str = Form(""),
     declared_salary_kind: str = Form(""),
@@ -115,10 +134,11 @@ def create_application(
     notes: str = Form(""),
     user: CurrentUser = Depends(require_user),
 ):
-    try:
-        salary = float(declared_salary.replace(",", ".")) if declared_salary.strip() else None
-    except ValueError:
-        salary = None
+    low, high = _amount(salary_min), _amount(salary_max)
+    # The database rejects an inverted range; a swapped pair is a typo, not a
+    # reason to lose the entry.
+    if low is not None and high is not None and low > high:
+        low, high = high, low
 
     repo.create_application(
         user.access_token,
@@ -131,8 +151,14 @@ def create_application(
         mode=mode,
         level=level,
         expires_at=expires_at,
+        salary_min=low,
+        salary_max=high,
+        salary_currency=salary_currency,
+        salary_kind=salary_kind,
+        salary_period=salary_period,
+        contract=contract,
         cv_document_id=cv_document_id,
-        declared_salary=salary,
+        declared_salary=_amount(declared_salary),
         declared_salary_kind=declared_salary_kind,
         declared_salary_period=declared_salary_period,
         declared_contract=declared_contract,

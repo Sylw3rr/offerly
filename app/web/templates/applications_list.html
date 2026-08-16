@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_money.html" as money %}
 {% block title %}Applications — Offerly{% endblock %}
 {% block body %}
 <main>
@@ -30,7 +31,7 @@
   {% if applications %}
     <table>
       <thead>
-        <tr><th>Company</th><th>Role</th><th>Source</th><th>CV</th><th>Declared</th><th>Status</th></tr>
+        <tr><th>Company</th><th>Role</th><th>CV</th><th>Advertised</th><th>Declared</th><th>Status</th></tr>
       </thead>
       <tbody>
       {% for a in applications %}
@@ -38,14 +39,9 @@
         <tr onclick="location.href='/applications/{{ a.id }}'">
           <td><strong>{{ offer.companies.name if offer.companies else '—' }}</strong></td>
           <td>{{ offer.title }}{% if offer.location %}<span class="dim"> · {{ offer.location }}</span>{% endif %}</td>
-          <td class="dim">{{ offer.source }}</td>
           <td class="dim">{{ a.documents.label if a.documents else '—' }}</td>
-          <td class="dim">
-            {% if a.declared_salary %}
-              {{ a.declared_salary | round | int }}
-              {{ a.declared_salary_kind or '' }}{% if a.declared_salary_period %}/{{ a.declared_salary_period }}{% endif %}
-            {% else %}—{% endif %}
-          </td>
+          <td class="dim">{{ money.offer_range(offer) | trim or '—' }}</td>
+          <td class="dim">{{ money.declared(a) | trim or '—' }}</td>
           <td><span class="badge s-{{ a.status }}">{{ a.status }}</span></td>
         </tr>
       {% endfor %}

@@ -27,6 +27,12 @@ A spreadsheet records these things. It does not notice them.
 **Track** — every application with company, role, source, date, CV version, declared
 salary and deadline.
 
+**Chase** — the dashboard lists only what needs doing today: offers about to close while
+the application is still a draft, applications nobody has answered, forms left half-done.
+
+**Reuse** — the answers every recruitment form asks for (notice period, expected rate,
+GDPR clause) written once and copied afterwards, so October's answer matches August's.
+
 **Ingest** — forward your job alerts to a private Offerly address; new offers land in a
 triage inbox instead of your mailbox.
 

@@ -9,6 +9,7 @@ these values are what it checks against.
 from datetime import UTC, datetime
 from typing import Any
 
+from app.attention import RELEVANT_STATUSES
 from app.db.client import user_client
 
 # Statuses that mean the application is finished, one way or another.
@@ -79,6 +80,7 @@ def list_applications(token: str, status: str | None = None) -> list[dict[str, A
         "id, status, submitted_at, declared_salary, declared_salary_kind,"
         "declared_salary_period, blocked_reason, notes,"
         "offers(id, title, source, url, location, mode, level, expires_at,"
+        "salary_min, salary_max, salary_currency, salary_kind, salary_period, contract,"
         "companies(id, name)),"
         "documents!applications_cv_document_id_fkey(id, label)"
     )
@@ -115,6 +117,12 @@ def create_application(
     mode: str | None,
     level: str | None,
     expires_at: str | None,
+    salary_min: float | None,
+    salary_max: float | None,
+    salary_currency: str | None,
+    salary_kind: str | None,
+    salary_period: str | None,
+    contract: str | None,
     cv_document_id: str | None,
     declared_salary: float | None,
     declared_salary_kind: str | None,
@@ -145,6 +153,12 @@ def create_application(
                 "mode": mode or None,
                 "level": level or None,
                 "expires_at": expires_at or None,
+                "salary_min": salary_min,
+                "salary_max": salary_max,
+                "salary_currency": (salary_currency or "PLN").upper()[:3],
+                "salary_kind": salary_kind or None,
+                "salary_period": salary_period or None,
+                "contract": contract or None,
                 "status": "applied",
             }
         )
@@ -243,6 +257,115 @@ def status_history(token: str, application_id: str) -> list[dict[str, Any]]:
         .execute()
     )
     return result.data or []
+
+
+# ---------------------------------------------------------------------------
+# Profile
+# ---------------------------------------------------------------------------
+
+# Used when the profile row cannot be read; keep in step with the column
+# default in 0001_initial_schema.sql.
+DEFAULT_GHOST_AFTER_DAYS = 21
+
+
+def get_profile(token: str) -> dict[str, Any]:
+    """The signed-in user's settings row, with defaults if it is missing."""
+    client = user_client(token)
+    result = client.table("profiles").select("display_name, ghost_after_days").limit(1).execute()
+    if result.data:
+        return result.data[0]
+    return {"display_name": None, "ghost_after_days": DEFAULT_GHOST_AFTER_DAYS}
+
+
+# ---------------------------------------------------------------------------
+# Dashboard
+# ---------------------------------------------------------------------------
+
+
+def open_applications(token: str) -> list[dict[str, Any]]:
+    """Applications still in play — the input to `app.attention`."""
+    client = user_client(token)
+    result = (
+        client.table("applications")
+        .select(
+            "id, status, submitted_at, blocked_reason,offers(title, expires_at, companies(name))"
+        )
+        .in_("status", sorted(RELEVANT_STATUSES))
+        .execute()
+    )
+    return result.data or []
+
+
+def recent_events(token: str, limit: int = 8) -> list[dict[str, Any]]:
+    """The last few status changes, across every application."""
+    client = user_client(token)
+    result = (
+        client.table("status_events")
+        .select(
+            "from_status, to_status, source, note, created_at,"
+            "applications(id, offers(title, companies(name)))"
+        )
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return result.data or []
+
+
+# ---------------------------------------------------------------------------
+# Profile answers — the paste buffer for recruitment forms
+# ---------------------------------------------------------------------------
+
+
+def list_profile_answers(token: str) -> list[dict[str, Any]]:
+    client = user_client(token)
+    result = (
+        client.table("profile_answers")
+        .select("id, label, value, sort_order")
+        .order("sort_order")
+        .order("label")
+        .execute()
+    )
+    return result.data or []
+
+
+def create_profile_answer(token: str, user_id: str, label: str, value: str) -> str:
+    """Add an answer, placing it after the existing ones."""
+    client = user_client(token)
+    last = (
+        client.table("profile_answers")
+        .select("sort_order")
+        .order("sort_order", desc=True)
+        .limit(1)
+        .execute()
+    )
+    next_order = (last.data[0]["sort_order"] + 1) if last.data else 0
+
+    created = (
+        client.table("profile_answers")
+        .insert(
+            {
+                "user_id": user_id,
+                "label": label.strip(),
+                "value": value.strip(),
+                "sort_order": next_order,
+            }
+        )
+        .execute()
+    )
+    return created.data[0]["id"]
+
+
+def update_profile_answer(token: str, answer_id: str, label: str, value: str) -> None:
+    client = user_client(token)
+    client.table("profile_answers").update({"label": label.strip(), "value": value.strip()}).eq(
+        "id", answer_id
+    ).execute()
+
+
+def delete_profile_answer(token: str, answer_id: str) -> None:
+    client = user_client(token)
+    client.table("profile_answers").delete().eq("id", answer_id).execute()
 
 
 # ---------------------------------------------------------------------------

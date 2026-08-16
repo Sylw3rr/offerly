@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Offerly{% endblock %}
+{% block body %}
+<main>
+  <h1>Signed in</h1>
+  <p class="sub">Account: {{ user.email }}</p>
+  <p>
+    The application registry lands here next. Until then, this page exists to
+    prove that authentication and row level security work end to end.
+  </p>
+</main>
+{% endblock %}

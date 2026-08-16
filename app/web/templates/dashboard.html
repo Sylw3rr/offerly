@@ -12,12 +12,12 @@
     {% if items %}
       <ul class="attention">
         {% for item in items %}
-          <li>
+          <li class="k-{{ item.kind }}">
             <a href="/applications/{{ item.application_id }}">
               <span class="who">{{ item.company }}</span>
               <span class="dim">{{ item.title }}</span>
               <span class="badge s-{{ item.status }}">{{ item.status }}</span>
-              <span class="why k-{{ item.kind }}">{{ item.message }}</span>
+              <span class="why">{{ item.message }}</span>
             </a>
           </li>
         {% endfor %}

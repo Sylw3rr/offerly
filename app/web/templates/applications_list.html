@@ -29,6 +29,7 @@
   </div>
 
   {% if applications %}
+    <div class="table-wrap">
     <table>
       <thead>
         <tr><th>Company</th><th>Role</th><th>CV</th><th>Advertised</th><th>Declared</th><th>Status</th></tr>
@@ -40,13 +41,14 @@
           <td><strong>{{ offer.companies.name if offer.companies else '—' }}</strong></td>
           <td>{{ offer.title }}{% if offer.location %}<span class="dim"> · {{ offer.location }}</span>{% endif %}</td>
           <td class="dim">{{ a.documents.label if a.documents else '—' }}</td>
-          <td class="dim">{{ money.offer_range(offer) | trim or '—' }}</td>
-          <td class="dim">{{ money.declared(a) | trim or '—' }}</td>
+          <td class="dim money">{{ money.offer_range(offer) | trim or '—' }}</td>
+          <td class="dim money">{{ money.declared(a) | trim or '—' }}</td>
           <td><span class="badge s-{{ a.status }}">{{ a.status }}</span></td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
+    </div>
   {% else %}
     <p class="empty">
       Nothing here yet. <a href="/applications/new">Add your first application</a> —

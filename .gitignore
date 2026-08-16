@@ -23,6 +23,9 @@ build/
 /data/
 /uploads/
 
+# Pages rendered to static HTML for design review, from stub data
+.preview/
+
 # Editors / OS
 .vscode/
 .idea/

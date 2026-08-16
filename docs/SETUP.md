@@ -35,6 +35,21 @@ uvicorn app.main:app --reload
 - Interactive docs: http://127.0.0.1:8000/docs
 - Health: http://127.0.0.1:8000/health
 
+## Supabase setup
+
+1. Create a project. Under **Security**, leave *Enable Data API* on, switch **off**
+   *Automatically expose new tables*, and switch **on** *Enable automatic RLS*.
+2. Apply the migrations in [`supabase/migrations/`](../supabase/migrations) in order —
+   see [`supabase/README.md`](../supabase/README.md).
+3. **Authentication → Sign In / Providers → disable "Allow new users to sign up".**
+   The anon key is public by design, so leaving this on would let anyone create an
+   account straight through the Supabase API and bypass the invite check.
+4. Create yourself an invite code:
+
+   ```sql
+   insert into invites (code, note, max_uses) values ('YOUR-CODE', 'first account', 1);
+   ```
+
 ## Tests and linting
 
 ```bash
@@ -49,9 +64,16 @@ CI runs the same three commands on every push and pull request.
 
 | Variable | Required | Notes |
 |---|---|---|
-| `SUPABASE_URL` | from v0.1 | Project URL |
-| `SUPABASE_ANON_KEY` | from v0.1 | Public key; row level security still applies |
+| `SUPABASE_URL` | from v0.1 | Project URL, e.g. `https://<ref>.supabase.co` |
+| `SUPABASE_ANON_KEY` | from v0.1 | Publishable key; row level security still applies |
 | `SUPABASE_SERVICE_KEY` | from v0.1 | **Server only.** Bypasses row level security |
+
+Both keys are on **Project Settings → API Keys**. Current projects issue keys in the
+`sb_publishable_…` / `sb_secret_…` format; the pinned `supabase` version understands
+these. Older releases only accept legacy JWT keys and fail with `Invalid API key`.
+
+Where to find the project URL: **Project Settings → Data API**, or read it off the
+dashboard address — `.../project/<ref>` means the URL is `https://<ref>.supabase.co`.
 | `APP_SECRET` | yes | Long random string |
 | `INGEST_DOMAIN` | from v0.2 | Domain for per-user forwarding addresses |
 | `INGEST_WEBHOOK_SECRET` | from v0.2 | Verifies the inbound-email webhook |

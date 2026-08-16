@@ -3,5 +3,8 @@ uvicorn[standard]==0.34.0
 jinja2==3.1.5
 python-multipart==0.0.20
 pydantic-settings==2.7.1
-supabase==2.11.0
+# 2.31+ accepts the current Supabase key format (sb_publishable_… / sb_secret_…).
+# Earlier releases only recognised the legacy JWT keys and reject the new ones
+# with "Invalid API key".
+supabase==2.31.0
 httpx==0.28.1

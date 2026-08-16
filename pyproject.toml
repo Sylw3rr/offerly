@@ -7,3 +7,6 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Make the project root importable so `from app.main import app` works
+# regardless of how pytest is invoked.
+pythonpath = ["."]

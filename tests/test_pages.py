@@ -10,6 +10,7 @@ here instead of in the browser.
 import pytest
 from fastapi.testclient import TestClient
 
+from app.auth import service
 from app.auth.dependencies import CurrentUser, require_user
 from app.db import repositories as repo
 from app.main import app
@@ -190,5 +191,143 @@ def test_duplicate_answer_label_is_explained_rather_than_thrown(client, monkeypa
 
 def test_navigation_links_to_every_section(client):
     response = client.get("/dashboard")
-    for path in ("/dashboard", "/applications", "/answers"):
+    for path in ("/dashboard", "/applications", "/answers", "/account"):
         assert f'href="{path}"' in response.text
+
+
+# ---------------------------------------------------------------------------
+# Correcting and removing an application
+# ---------------------------------------------------------------------------
+
+
+def test_edit_form_arrives_filled_in_with_what_is_stored(client):
+    response = client.get("/applications/a1/edit")
+    assert response.status_code == 200
+    assert 'value="Acme"' in response.text
+    assert 'value="Support specialist"' in response.text
+    assert 'value="8000"' in response.text  # not 8000.00
+    assert 'value="2026-07-20"' in response.text  # the send date, not a timestamp
+
+
+def test_edit_form_cannot_change_status(client):
+    """Status moves only through the panel that records it in the history."""
+    response = client.get("/applications/a1/edit")
+    assert 'name="status"' not in response.text
+
+
+def test_editing_saves_the_new_values(client, monkeypatch):
+    seen = {}
+
+    def capture(token, user_id, application_id, **fields):
+        seen.update({"id": application_id, **fields})
+
+    monkeypatch.setattr(repo, "update_application", capture)
+    response = client.post(
+        "/applications/a1/edit",
+        data={"company_name": "Acme Poland", "title": "Support specialist", "salary_min": "9 000"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/applications/a1"
+    assert seen["id"] == "a1"
+    assert seen["company_name"] == "Acme Poland"
+    assert seen["salary_min"] == 9000.0  # the space did not defeat it
+
+
+def test_a_range_typed_back_to_front_is_swapped_not_lost(client, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(repo, "update_application", lambda t, u, i, **f: seen.update(f))
+    client.post(
+        "/applications/a1/edit",
+        data={"company_name": "Acme", "title": "Role", "salary_min": "12000", "salary_max": "8000"},
+    )
+    assert (seen["salary_min"], seen["salary_max"]) == (8000.0, 12000.0)
+
+
+def test_deleting_an_application_returns_to_the_registry(client, monkeypatch):
+    deleted = []
+    monkeypatch.setattr(repo, "delete_application", lambda token, i: deleted.append(i))
+    response = client.post("/applications/a1/delete", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/applications"
+    assert deleted == ["a1"]
+
+
+def test_detail_page_offers_both_editing_and_deleting(client):
+    response = client.get("/applications/a1")
+    assert 'href="/applications/a1/edit"' in response.text
+    assert 'action="/applications/a1/delete"' in response.text
+
+
+def test_an_old_application_keeps_the_date_it_was_actually_sent(client, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(
+        repo, "create_application", lambda t, u, status, **f: seen.update(f) or "a9"
+    )
+    client.post(
+        "/applications/new",
+        data={"company_name": "Acme", "title": "Role", "submitted_on": "2026-06-01"},
+    )
+    assert seen["submitted_at"].startswith("2026-06-01T12:00")
+
+
+# ---------------------------------------------------------------------------
+# Account
+# ---------------------------------------------------------------------------
+
+
+def test_account_page_offers_an_export_before_it_offers_deletion(client):
+    response = client.get("/account")
+    assert response.status_code == 200
+    assert response.text.index("applications.csv") < response.text.index("/account/delete")
+
+
+def test_applications_export_is_a_csv_with_a_header_and_the_rows(client):
+    response = client.get("/account/applications.csv")
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+    assert "offerly-applications.csv" in response.headers["content-disposition"]
+    body = response.text
+    assert body.startswith("﻿")  # so spreadsheets read the accents right
+    assert "company,role,status" in body
+    assert "Acme" in body
+
+
+def test_answers_export_lists_the_saved_answers(client, monkeypatch):
+    monkeypatch.setattr(
+        repo,
+        "list_profile_answers",
+        lambda token: [{"id": "p1", "label": "Notice period", "value": "One month"}],
+    )
+    body = client.get("/account/answers.csv").text
+    assert "label,answer" in body
+    assert "Notice period,One month" in body
+
+
+def test_account_deletion_needs_the_address_typed_correctly(client, monkeypatch):
+    called = []
+    monkeypatch.setattr(service, "delete_account", lambda user_id: called.append(user_id))
+    response = client.post("/account/delete", data={"confirm_email": "typo@example.com"})
+    assert response.status_code == 400
+    assert called == []
+
+
+def test_account_deletion_passes_the_id_from_the_session_not_the_form(client, monkeypatch):
+    called = []
+    monkeypatch.setattr(service, "delete_account", lambda user_id: called.append(user_id))
+    response = client.post(
+        "/account/delete",
+        data={"confirm_email": "PATRYK@example.com", "user_id": "somebody-else"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
+    assert called == [USER.id]
+
+
+def test_signing_out_happens_with_the_account_deletion(client, monkeypatch):
+    monkeypatch.setattr(service, "delete_account", lambda user_id: None)
+    response = client.post(
+        "/account/delete", data={"confirm_email": USER.email}, follow_redirects=False
+    )
+    assert 'offerly_access=""' in response.headers.get("set-cookie", "")

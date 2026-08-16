@@ -50,6 +50,31 @@ uvicorn app.main:app --reload
    insert into invites (code, note, max_uses) values ('YOUR-CODE', 'first account', 1);
    ```
 
+## Password recovery
+
+Recovery is handled server-side, so the emailed link must carry a token hash rather
+than a session in the URL fragment. Two settings in the Supabase dashboard:
+
+1. **Authentication → URL Configuration → Redirect URLs** — add
+   `<APP_BASE_URL>/reset-password`, e.g. `http://127.0.0.1:8000/reset-password`.
+   Supabase refuses to redirect anywhere that is not on this list.
+2. **Authentication → Emails → Reset Password** — replace the link in the template so
+   it carries the token hash:
+
+   ```html
+   <a href="{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery">
+     Set a new password
+   </a>
+   ```
+
+   The default template uses `{{ .ConfirmationURL }}`, which returns the tokens in the
+   URL fragment — the part a browser never sends to the server. Offerly would see a
+   link with nothing in it and say the token is missing.
+
+Without SMTP configured, Supabase's shared sender is rate-limited to a few messages an
+hour and is fine for trying this out. Any real deployment needs its own SMTP under
+**Authentication → Emails → SMTP Settings**.
+
 ## Tests and linting
 
 ```bash
@@ -67,6 +92,11 @@ CI runs the same three commands on every push and pull request.
 | `SUPABASE_URL` | from v0.1 | Project URL, e.g. `https://<ref>.supabase.co` |
 | `SUPABASE_ANON_KEY` | from v0.1 | Publishable key; row level security still applies |
 | `SUPABASE_SERVICE_KEY` | from v0.1 | **Server only.** Bypasses row level security |
+| `APP_SECRET` | yes | Long random string |
+| `APP_BASE_URL` | yes | Where this installation answers; password reset links point back here |
+| `INGEST_DOMAIN` | from v0.2 | Domain for per-user forwarding addresses |
+| `INGEST_WEBHOOK_SECRET` | from v0.2 | Verifies the inbound-email webhook |
+| `ANTHROPIC_API_KEY` | no | Leave empty to run without AI features |
 
 Both keys are on **Project Settings → API Keys**. Current projects issue keys in the
 `sb_publishable_…` / `sb_secret_…` format; the pinned `supabase` version understands
@@ -74,10 +104,6 @@ these. Older releases only accept legacy JWT keys and fail with `Invalid API key
 
 Where to find the project URL: **Project Settings → Data API**, or read it off the
 dashboard address — `.../project/<ref>` means the URL is `https://<ref>.supabase.co`.
-| `APP_SECRET` | yes | Long random string |
-| `INGEST_DOMAIN` | from v0.2 | Domain for per-user forwarding addresses |
-| `INGEST_WEBHOOK_SECRET` | from v0.2 | Verifies the inbound-email webhook |
-| `ANTHROPIC_API_KEY` | no | Leave empty to run without AI features |
 
 `SUPABASE_SERVICE_KEY` bypasses every row level security policy. It belongs on the
 server and nowhere else — never in a browser, a mobile client, or a committed file.

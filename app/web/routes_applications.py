@@ -1,5 +1,7 @@
 """The application registry."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -77,6 +79,90 @@ def _amount(text: str) -> float | None:
         return None
 
 
+def _plain(value: Any) -> str:
+    """Put an amount back in a text field the way it was likely typed.
+
+    Postgres returns 8000.00; showing that in the edit form invites the user to
+    wonder whether the pennies mean something.
+    """
+    if value in (None, ""):
+        return ""
+    number = float(value)
+    return str(int(number)) if number.is_integer() else str(number)
+
+
+def _timestamp(day: str) -> str | None:
+    """Turn a date from a date input into a timestamp.
+
+    Midday rather than midnight: the column is timestamptz, and a date pinned
+    to midnight UTC lands on the previous day for anyone west of Greenwich.
+    """
+    day = day.strip()
+    return f"{day}T12:00:00+00:00" if day else None
+
+
+def application_fields(
+    company_name: str = Form(...),
+    title: str = Form(...),
+    source: str = Form("other"),
+    url: str = Form(""),
+    location: str = Form(""),
+    mode: str = Form(""),
+    level: str = Form(""),
+    expires_at: str = Form(""),
+    salary_min: str = Form(""),
+    salary_max: str = Form(""),
+    salary_currency: str = Form("PLN"),
+    salary_kind: str = Form(""),
+    salary_period: str = Form(""),
+    contract: str = Form(""),
+    cv_document_id: str = Form(""),
+    declared_salary: str = Form(""),
+    declared_salary_kind: str = Form(""),
+    declared_salary_period: str = Form(""),
+    declared_contract: str = Form(""),
+    submitted_on: str = Form(""),
+    blocked_reason: str = Form(""),
+    notes: str = Form(""),
+) -> dict[str, Any]:
+    """Everything the add and edit forms have in common, read once.
+
+    Declared as a dependency so both routes accept the same fields and clean
+    them the same way — the two drifting apart is how an edit form starts
+    quietly dropping what the add form saved.
+    """
+    low, high = _amount(salary_min), _amount(salary_max)
+    # The database rejects an inverted range; a swapped pair is a typo, not a
+    # reason to lose the entry.
+    if low is not None and high is not None and low > high:
+        low, high = high, low
+
+    return {
+        "company_name": company_name,
+        "title": title,
+        "source": source,
+        "url": url,
+        "location": location,
+        "mode": mode,
+        "level": level,
+        "expires_at": expires_at,
+        "salary_min": low,
+        "salary_max": high,
+        "salary_currency": salary_currency,
+        "salary_kind": salary_kind,
+        "salary_period": salary_period,
+        "contract": contract,
+        "cv_document_id": cv_document_id,
+        "declared_salary": _amount(declared_salary),
+        "declared_salary_kind": declared_salary_kind,
+        "declared_salary_period": declared_salary_period,
+        "declared_contract": declared_contract,
+        "submitted_at": _timestamp(submitted_on),
+        "blocked_reason": blocked_reason,
+        "notes": notes,
+    }
+
+
 @router.get("/applications", response_class=HTMLResponse)
 def list_applications(
     request: Request,
@@ -102,70 +188,101 @@ def list_applications(
 def new_application_form(request: Request, user: CurrentUser = Depends(require_user)):
     return templates.TemplateResponse(
         request,
-        "application_new.html",
-        {"user": user, "documents": repo.list_documents(user.access_token), **FORM_CHOICES},
+        "application_form.html",
+        {
+            "user": user,
+            "documents": repo.list_documents(user.access_token),
+            "heading": "Add application",
+            "intro": "Record something you sent, or an offer you are still deciding on.",
+            "action": "/applications/new",
+            "submit_label": "Save",
+            "cancel_url": "/applications",
+            "form": {},
+            "editing": False,
+            **FORM_CHOICES,
+        },
     )
 
 
 @router.post("/applications/new")
 def create_application(
-    request: Request,
-    company_name: str = Form(...),
-    title: str = Form(...),
-    source: str = Form("other"),
-    url: str = Form(""),
-    location: str = Form(""),
-    mode: str = Form(""),
-    level: str = Form(""),
-    expires_at: str = Form(""),
-    salary_min: str = Form(""),
-    salary_max: str = Form(""),
-    salary_currency: str = Form("PLN"),
-    salary_kind: str = Form(""),
-    salary_period: str = Form(""),
-    contract: str = Form(""),
-    cv_document_id: str = Form(""),
-    declared_salary: str = Form(""),
-    declared_salary_kind: str = Form(""),
-    declared_salary_period: str = Form(""),
-    declared_contract: str = Form(""),
     status: str = Form("submitted"),
-    blocked_reason: str = Form(""),
-    notes: str = Form(""),
+    fields: dict[str, Any] = Depends(application_fields),
     user: CurrentUser = Depends(require_user),
 ):
-    low, high = _amount(salary_min), _amount(salary_max)
-    # The database rejects an inverted range; a swapped pair is a typo, not a
-    # reason to lose the entry.
-    if low is not None and high is not None and low > high:
-        low, high = high, low
+    application_id = repo.create_application(user.access_token, user.id, status=status, **fields)
+    return RedirectResponse(f"/applications/{application_id}", status_code=303)
 
-    repo.create_application(
-        user.access_token,
-        user.id,
-        company_name=company_name,
-        title=title,
-        source=source,
-        url=url,
-        location=location,
-        mode=mode,
-        level=level,
-        expires_at=expires_at,
-        salary_min=low,
-        salary_max=high,
-        salary_currency=salary_currency,
-        salary_kind=salary_kind,
-        salary_period=salary_period,
-        contract=contract,
-        cv_document_id=cv_document_id,
-        declared_salary=_amount(declared_salary),
-        declared_salary_kind=declared_salary_kind,
-        declared_salary_period=declared_salary_period,
-        declared_contract=declared_contract,
-        status=status,
-        blocked_reason=blocked_reason,
-        notes=notes,
+
+@router.get("/applications/{application_id}/edit", response_class=HTMLResponse)
+def edit_application_form(
+    request: Request,
+    application_id: str,
+    user: CurrentUser = Depends(require_user),
+):
+    application = repo.get_application(user.access_token, application_id)
+    if application is None:
+        return RedirectResponse("/applications", status_code=303)
+
+    offer = application.get("offers") or {}
+    company = offer.get("companies") or {}
+    return templates.TemplateResponse(
+        request,
+        "application_form.html",
+        {
+            "user": user,
+            "documents": repo.list_documents(user.access_token),
+            "heading": "Edit application",
+            "intro": "Correcting a detail changes the record, not its history.",
+            "action": f"/applications/{application_id}/edit",
+            "submit_label": "Save changes",
+            "cancel_url": f"/applications/{application_id}",
+            "editing": True,
+            "form": {
+                "company_name": company.get("name", ""),
+                "title": offer.get("title", ""),
+                "source": offer.get("source", ""),
+                "url": offer.get("url") or "",
+                "location": offer.get("location") or "",
+                "mode": offer.get("mode") or "",
+                "level": offer.get("level") or "",
+                "expires_at": offer.get("expires_at") or "",
+                "salary_min": _plain(offer.get("salary_min")),
+                "salary_max": _plain(offer.get("salary_max")),
+                "salary_currency": offer.get("salary_currency") or "PLN",
+                "salary_kind": offer.get("salary_kind") or "",
+                "salary_period": offer.get("salary_period") or "",
+                "contract": offer.get("contract") or "",
+                "cv_document_id": application.get("cv_document_id") or "",
+                "declared_salary": _plain(application.get("declared_salary")),
+                "declared_salary_kind": application.get("declared_salary_kind") or "",
+                "declared_salary_period": application.get("declared_salary_period") or "",
+                "declared_contract": application.get("declared_contract") or "",
+                "submitted_on": (application.get("submitted_at") or "")[:10],
+                "blocked_reason": application.get("blocked_reason") or "",
+                "notes": application.get("notes") or "",
+            },
+            **FORM_CHOICES,
+        },
     )
+
+
+@router.post("/applications/{application_id}/edit")
+def edit_application(
+    application_id: str,
+    fields: dict[str, Any] = Depends(application_fields),
+    user: CurrentUser = Depends(require_user),
+):
+    try:
+        repo.update_application(user.access_token, user.id, application_id, **fields)
+    except ValueError:
+        return RedirectResponse("/applications", status_code=303)
+    return RedirectResponse(f"/applications/{application_id}", status_code=303)
+
+
+@router.post("/applications/{application_id}/delete")
+def delete_application(application_id: str, user: CurrentUser = Depends(require_user)):
+    repo.delete_application(user.access_token, application_id)
     return RedirectResponse("/applications", status_code=303)
 
 

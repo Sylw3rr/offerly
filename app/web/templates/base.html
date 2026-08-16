@@ -219,6 +219,23 @@
       color: var(--danger); padding: .65rem .8rem; border-radius: 7px;
       font-size: .9rem; margin-bottom: 1rem;
     }
+    .notice {
+      background: rgba(42, 224, 255, .1); border: 1px solid rgba(42, 224, 255, .5);
+      color: var(--ink); padding: .7rem .85rem; border-radius: 7px;
+      font-size: .92rem; margin: 0;
+    }
+
+    /* Anything that destroys data announces itself before it is clicked. */
+    .panel.danger { border-color: rgba(255, 95, 126, .45); }
+    .panel.danger h2 { color: var(--danger); }
+    button.destructive {
+      background: none; border: 1px solid var(--danger); color: var(--danger);
+      width: auto; padding: .6rem 1.4rem;
+    }
+    button.destructive:hover {
+      background: var(--danger); color: #14060c; box-shadow: 0 0 22px -6px var(--danger);
+    }
+    .downloads { display: flex; gap: .7rem; flex-wrap: wrap; margin: 0; }
 
     fieldset { padding: .4rem 1.3rem 1.4rem; margin: 0 0 1.2rem; }
     legend {
@@ -383,6 +400,7 @@
           <a href="/dashboard" class="{% if here == '/dashboard' %}on{% endif %}">Dashboard</a>
           <a href="/applications" class="{% if here.startswith('/applications') %}on{% endif %}">Applications</a>
           <a href="/answers" class="{% if here.startswith('/answers') %}on{% endif %}">Answers</a>
+          <a href="/account" class="{% if here.startswith('/account') %}on{% endif %}">Account</a>
         </nav>
         <form method="post" action="/logout" style="margin:0">
           <button class="linkbtn" type="submit">Sign out</button>

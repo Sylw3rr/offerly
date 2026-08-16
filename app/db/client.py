@@ -18,6 +18,19 @@ from supabase import Client, create_client
 
 @lru_cache
 def anon_client() -> Client:
+    """Shared, unauthenticated. Only for calls that pass their token explicitly.
+
+    This one is cached, so it is global to the process. Anything that signs a
+    session *into* the client — signing in, recovering a password — must use
+    `new_anon_client` instead, or two visitors would be sharing one session
+    store.
+    """
+    settings = get_settings()
+    return create_client(settings.supabase_url, settings.supabase_anon_key)
+
+
+def new_anon_client() -> Client:
+    """An unauthenticated client of one's own, for flows that hold a session."""
     settings = get_settings()
     return create_client(settings.supabase_url, settings.supabase_anon_key)
 

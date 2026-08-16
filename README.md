@@ -74,7 +74,10 @@ passwords. Each account gets a private forwarding address; you decide with a mai
 filter what reaches it. This removes the single largest liability such a tool can
 carry — and it works with any mail provider, not just Gmail.
 
-**Your data is deletable.** Account deletion removes stored data.
+**Your data is yours to take and yours to destroy.** The account page exports every
+application and saved answer as plain CSV, and closes the account for good — the
+tables cascade from the account row, so deletion is immediate and total rather than a
+flag on a row that stays behind.
 
 ## Quickstart
 

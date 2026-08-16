@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Account — Offerly{% endblock %}
+{% block body %}
+<main>
+  <h1>Account</h1>
+  <p class="sub">Signed in as {{ user.email }}</p>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <section class="panel">
+    <h2>Take your data with you</h2>
+    <p class="hint">
+      Plain CSV, one row per record. Opens in Sheets, Excel and LibreOffice —
+      nothing here is locked to Offerly.
+    </p>
+    <p class="downloads">
+      <a class="btn" href="/account/applications.csv">Applications</a>
+      <a class="btn" href="/account/answers.csv">Answers</a>
+    </p>
+  </section>
+
+  <section class="panel danger">
+    <h2>Close this account</h2>
+    <p class="hint">
+      Deletes every application, offer, company, CV version, answer and the
+      account itself. It happens immediately and cannot be undone — export first
+      if there is anything you want to keep.
+    </p>
+    <form method="post" action="/account/delete"
+          onsubmit="return confirm('Delete this account and everything in it? This cannot be undone.')">
+      <label for="confirm_email">Type {{ user.email }} to confirm</label>
+      <input id="confirm_email" name="confirm_email" autocomplete="off" required>
+      <button type="submit" class="destructive">Delete my account</button>
+    </form>
+  </section>
+</main>
+{% endblock %}

@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.auth.dependencies import _RedirectToLogin, get_current_user, set_session_cookies
 from app.config import get_settings
+from app.web.routes_account import router as account_router
 from app.web.routes_answers import router as answers_router
 from app.web.routes_applications import router as applications_router
 from app.web.routes_auth import router as auth_router
@@ -25,6 +26,7 @@ app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(applications_router)
 app.include_router(answers_router)
+app.include_router(account_router)
 
 
 @app.middleware("http")

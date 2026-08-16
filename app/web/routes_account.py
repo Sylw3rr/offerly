@@ -1,0 +1,140 @@
+"""The account page: take your data out, or close the account.
+
+Both belong together. A tool holding a job search should make leaving as
+straightforward as arriving — and an export is what makes deletion a decision
+rather than a loss.
+"""
+
+import csv
+import io
+
+from fastapi import APIRouter, Depends, Form, Request, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
+
+from app.auth import service
+from app.auth.dependencies import CurrentUser, clear_session_cookies, require_user
+from app.db import repositories as repo
+from app.web.templates import templates
+
+router = APIRouter(tags=["account"])
+
+APPLICATION_COLUMNS = [
+    "company",
+    "role",
+    "status",
+    "source",
+    "location",
+    "mode",
+    "level",
+    "submitted_on",
+    "offer_closes",
+    "salary_min",
+    "salary_max",
+    "currency",
+    "salary_kind",
+    "salary_period",
+    "contract_offered",
+    "declared_salary",
+    "declared_kind",
+    "declared_period",
+    "declared_contract",
+    "cv_version",
+    "blocked_reason",
+    "url",
+    "notes",
+]
+
+
+def _csv_response(filename: str, header: list[str], rows: list[list[object]]) -> Response:
+    """A CSV the user's spreadsheet will open without an import wizard.
+
+    The byte order mark is there for Excel: without it, every Polish character
+    in a company name arrives mangled.
+    """
+    buffer = io.StringIO()
+    buffer.write("﻿")
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(header)
+    writer.writerows(rows)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/account", response_class=HTMLResponse)
+def account(request: Request, user: CurrentUser = Depends(require_user), error: str | None = None):
+    return templates.TemplateResponse(request, "account.html", {"user": user, "error": error})
+
+
+@router.get("/account/applications.csv")
+def export_applications(user: CurrentUser = Depends(require_user)):
+    rows = []
+    for a in repo.list_applications(user.access_token):
+        offer = a.get("offers") or {}
+        company = offer.get("companies") or {}
+        document = a.get("documents") or {}
+        rows.append(
+            [
+                company.get("name", ""),
+                offer.get("title", ""),
+                a.get("status", ""),
+                offer.get("source", ""),
+                offer.get("location", ""),
+                offer.get("mode", ""),
+                offer.get("level", ""),
+                (a.get("submitted_at") or "")[:10],
+                offer.get("expires_at", ""),
+                offer.get("salary_min", ""),
+                offer.get("salary_max", ""),
+                offer.get("salary_currency", ""),
+                offer.get("salary_kind", ""),
+                offer.get("salary_period", ""),
+                offer.get("contract", ""),
+                a.get("declared_salary", ""),
+                a.get("declared_salary_kind", ""),
+                a.get("declared_salary_period", ""),
+                a.get("declared_contract", ""),
+                document.get("label", ""),
+                a.get("blocked_reason", ""),
+                offer.get("url", ""),
+                a.get("notes", ""),
+            ]
+        )
+    return _csv_response("offerly-applications.csv", APPLICATION_COLUMNS, rows)
+
+
+@router.get("/account/answers.csv")
+def export_answers(user: CurrentUser = Depends(require_user)):
+    rows = [
+        [answer["label"], answer["value"]]
+        for answer in repo.list_profile_answers(user.access_token)
+    ]
+    return _csv_response("offerly-answers.csv", ["label", "answer"], rows)
+
+
+@router.post("/account/delete")
+def delete_account(
+    request: Request,
+    confirm_email: str = Form(...),
+    user: CurrentUser = Depends(require_user),
+):
+    """Close the account for good.
+
+    Typing the address is the confirmation: it is the one thing a misdirected
+    click cannot produce. The id passed to the delete comes from the verified
+    session, never from this form — the field is only ever compared.
+    """
+    if confirm_email.strip().lower() != user.email.lower():
+        return templates.TemplateResponse(
+            request,
+            "account.html",
+            {"user": user, "error": "That is not the address this account signs in with."},
+            status_code=400,
+        )
+
+    service.delete_account(user.id)
+    response = RedirectResponse("/login", status_code=303)
+    clear_session_cookies(response)
+    return response

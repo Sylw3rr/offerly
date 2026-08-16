@@ -9,7 +9,7 @@ here.
 
 from dataclasses import dataclass
 
-from app.db.client import anon_client, service_client
+from app.db.client import new_anon_client, service_client
 
 
 class AuthError(Exception):
@@ -39,7 +39,9 @@ def _session_from_supabase(response) -> Session:
 
 def sign_in(email: str, password: str) -> Session:
     try:
-        response = anon_client().auth.sign_in_with_password({"email": email, "password": password})
+        response = new_anon_client().auth.sign_in_with_password(
+            {"email": email, "password": password}
+        )
     except Exception as exc:  # supabase raises provider-specific errors
         raise AuthError("Invalid email or password.") from exc
     return _session_from_supabase(response)
@@ -69,3 +71,65 @@ def sign_up(email: str, password: str, invite_code: str) -> Session:
         raise AuthError("Could not create the account. Is the email already registered?") from exc
 
     return sign_in(email, password)
+
+
+# ---------------------------------------------------------------------------
+# Password recovery
+# ---------------------------------------------------------------------------
+
+MIN_PASSWORD_LENGTH = 10
+
+
+def send_password_reset(email: str, redirect_to: str) -> None:
+    """Ask Supabase to email a recovery link. Never reports whether it existed.
+
+    Failures are swallowed on purpose: an error shown for one address and a
+    success for another turns this form into a way to test who has an account
+    here. Since this holds a job search, that is worth protecting.
+    """
+    try:
+        new_anon_client().auth.reset_password_email(email, {"redirect_to": redirect_to})
+    except Exception:
+        pass
+
+
+def reset_password(token_hash: str, new_password: str) -> Session:
+    """Redeem a recovery token and set a new password.
+
+    The link carries a token hash rather than a session in the URL fragment,
+    so the exchange happens here rather than in the browser — see
+    docs/SETUP.md for the email template this expects.
+    """
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        raise AuthError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+
+    client = new_anon_client()
+    try:
+        verified = client.auth.verify_otp({"token_hash": token_hash, "type": "recovery"})
+    except Exception as exc:
+        raise AuthError("This link has expired or has already been used.") from exc
+
+    if getattr(verified, "session", None) is None:
+        raise AuthError("This link has expired or has already been used.")
+
+    try:
+        client.auth.update_user({"password": new_password})
+    except Exception as exc:
+        raise AuthError("Could not set that password. Try a different one.") from exc
+
+    return _session_from_supabase(verified)
+
+
+# ---------------------------------------------------------------------------
+# Closing an account
+# ---------------------------------------------------------------------------
+
+
+def delete_account(user_id: str) -> None:
+    """Delete the account and everything belonging to it.
+
+    Every user-owned table references `auth.users` with `on delete cascade`,
+    so removing the auth user removes the rows with it — no sweep to forget.
+    The id comes from the verified session and never from request input.
+    """
+    service_client().auth.admin.delete_user(user_id)

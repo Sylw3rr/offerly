@@ -6,7 +6,10 @@
 <main>
   <p><a class="back" href="/applications">← All applications</a></p>
 
-  <h1>{{ offer.title }}</h1>
+  <div class="row-between">
+    <h1>{{ offer.title }}</h1>
+    <a class="btn" href="/applications/{{ application.id }}/edit">Edit</a>
+  </div>
   <p class="sub">
     {{ offer.companies.name if offer.companies else '—' }}
     {% if offer.location %} · {{ offer.location }}{% endif %}
@@ -56,6 +59,17 @@
       </form>
     </section>
   </div>
+
+  <section class="panel danger">
+    <h2>Remove this application</h2>
+    <p class="hint">
+      Deletes the offer, the application and its history. Nothing here can be recovered.
+    </p>
+    <form method="post" action="/applications/{{ application.id }}/delete"
+          onsubmit="return confirm('Delete this application and its history? This cannot be undone.')">
+      <button type="submit" class="destructive">Delete application</button>
+    </form>
+  </section>
 
   <section class="panel">
     <h2>History</h2>

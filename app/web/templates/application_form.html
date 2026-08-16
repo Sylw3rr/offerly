@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{#
+  One form for adding and for correcting. Status is missing from it on purpose:
+  it moves only through the status panel, which writes the history. Editing a
+  typo is not an event in the search and should leave no trace.
+#}
+{% block title %}{{ heading }} — Offerly{% endblock %}
+{% block body %}
+<main>
+  <h1>{{ heading }}</h1>
+  <p class="sub">{{ intro }}</p>
+
+  <form method="post" action="{{ action }}" class="form-wide">
+    <fieldset>
+      <legend>The offer</legend>
+      <div class="grid2">
+        <div>
+          <label for="company_name">Company *</label>
+          <input id="company_name" name="company_name" value="{{ form.company_name or '' }}"
+                 required {% if not editing %}autofocus{% endif %}>
+        </div>
+        <div>
+          <label for="title">Role *</label>
+          <input id="title" name="title" value="{{ form.title or '' }}" required>
+        </div>
+        <div>
+          <label for="source">Source</label>
+          <select id="source" name="source">
+            {% for v, l in sources %}
+              <option value="{{ v }}" {% if v == form.source %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="location">Location</label>
+          <input id="location" name="location" value="{{ form.location or '' }}" placeholder="Gliwice">
+        </div>
+        <div>
+          <label for="mode">Work mode</label>
+          <select id="mode" name="mode">
+            {% for v, l in modes %}
+              <option value="{{ v }}" {% if v == form.mode %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="level">Level</label>
+          <select id="level" name="level">
+            {% for v, l in levels %}
+              <option value="{{ v }}" {% if v == form.level %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="url">Link</label>
+          <input id="url" name="url" type="url" value="{{ form.url or '' }}" placeholder="https://">
+        </div>
+        <div>
+          <label for="expires_at">Offer closes</label>
+          <input id="expires_at" name="expires_at" type="date" value="{{ form.expires_at or '' }}">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Advertised range</legend>
+      <p class="hint">What the offer said, if it said anything. Leave blank when it did not.</p>
+      <div class="grid4">
+        <div>
+          <label for="salary_min">From</label>
+          <input id="salary_min" name="salary_min" inputmode="decimal"
+                 value="{{ form.salary_min or '' }}" placeholder="8000">
+        </div>
+        <div>
+          <label for="salary_max">To</label>
+          <input id="salary_max" name="salary_max" inputmode="decimal"
+                 value="{{ form.salary_max or '' }}" placeholder="12000">
+        </div>
+        <div>
+          <label for="salary_currency">Currency</label>
+          <select id="salary_currency" name="salary_currency">
+            {% for v, l in currencies %}
+              <option value="{{ v }}" {% if v == form.salary_currency %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="salary_kind">Gross / net</label>
+          <select id="salary_kind" name="salary_kind">
+            {% for v, l in salary_kinds %}
+              <option value="{{ v }}" {% if v == form.salary_kind %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="salary_period">Per</label>
+          <select id="salary_period" name="salary_period">
+            {% for v, l in salary_periods %}
+              <option value="{{ v }}" {% if v == form.salary_period %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="contract">Contract offered</label>
+          <select id="contract" name="contract">
+            {% for v, l in contracts %}
+              <option value="{{ v }}" {% if v == form.contract %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>What you sent</legend>
+      <div class="grid2">
+        {% if not editing %}
+          <div>
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              {% for v, l in statuses %}
+                <option value="{{ v }}" {% if v == 'submitted' %}selected{% endif %}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+        <div>
+          <label for="submitted_on">Sent on</label>
+          <input id="submitted_on" name="submitted_on" type="date" value="{{ form.submitted_on or '' }}">
+          <p class="hint">Leave empty for today. Set it when catching up on older applications.</p>
+        </div>
+        <div>
+          <label for="cv_document_id">CV version</label>
+          <select id="cv_document_id" name="cv_document_id">
+            <option value="">—</option>
+            {% for d in documents %}
+              <option value="{{ d.id }}" {% if d.id == form.cv_document_id %}selected{% endif %}>{{ d.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="blocked_reason">If blocked, what is needed?</label>
+          <input id="blocked_reason" name="blocked_reason" value="{{ form.blocked_reason or '' }}"
+                 placeholder="External form, CV upload by hand">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Salary you declared</legend>
+      <p class="hint">
+        Kept separate from the advertised range: employers ask in different units,
+        and what you quoted is what matters later.
+      </p>
+      <div class="grid4">
+        <div>
+          <label for="declared_salary">Amount</label>
+          <input id="declared_salary" name="declared_salary" inputmode="decimal"
+                 value="{{ form.declared_salary or '' }}" placeholder="10000">
+        </div>
+        <div>
+          <label for="declared_salary_kind">Gross / net</label>
+          <select id="declared_salary_kind" name="declared_salary_kind">
+            {% for v, l in salary_kinds %}
+              <option value="{{ v }}" {% if v == form.declared_salary_kind %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="declared_salary_period">Per</label>
+          <select id="declared_salary_period" name="declared_salary_period">
+            {% for v, l in salary_periods %}
+              <option value="{{ v }}" {% if v == form.declared_salary_period %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="declared_contract">Contract</label>
+          <select id="declared_contract" name="declared_contract">
+            {% for v, l in contracts %}
+              <option value="{{ v }}" {% if v == form.declared_contract %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="3">{{ form.notes or '' }}</textarea>
+
+    <div class="actions">
+      <button type="submit">{{ submit_label }}</button>
+      <a class="cancel" href="{{ cancel_url }}">Cancel</a>
+    </div>
+  </form>
+
+  {% if not editing %}
+    <details class="cv-add">
+      <summary>Add a CV version</summary>
+      <form method="post" action="/documents/new" class="inline-form">
+        <input name="label" placeholder="e.g. Sales B2B, Helpdesk, AI automation" required>
+        <button type="submit">Add</button>
+      </form>
+    </details>
+  {% endif %}
+</main>
+{% endblock %}

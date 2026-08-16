@@ -105,40 +105,47 @@ def get_application(token: str, application_id: str) -> dict[str, Any] | None:
     return result.data[0] if result.data else None
 
 
-def create_application(
-    token: str,
-    user_id: str,
-    *,
-    company_name: str,
-    title: str,
-    source: str,
-    url: str | None,
-    location: str | None,
-    mode: str | None,
-    level: str | None,
-    expires_at: str | None,
-    salary_min: float | None,
-    salary_max: float | None,
-    salary_currency: str | None,
-    salary_kind: str | None,
-    salary_period: str | None,
-    contract: str | None,
-    cv_document_id: str | None,
-    declared_salary: float | None,
-    declared_salary_kind: str | None,
-    declared_salary_period: str | None,
-    declared_contract: str | None,
-    status: str,
-    blocked_reason: str | None,
-    notes: str | None,
-) -> str:
+def _offer_payload(fields: dict[str, Any]) -> dict[str, Any]:
+    """The offer's own columns, normalised the same way new or edited."""
+    return {
+        "title": fields["title"].strip(),
+        "source": fields["source"],
+        "url": fields["url"] or None,
+        "location": fields["location"] or None,
+        "mode": fields["mode"] or None,
+        "level": fields["level"] or None,
+        "expires_at": fields["expires_at"] or None,
+        "salary_min": fields["salary_min"],
+        "salary_max": fields["salary_max"],
+        "salary_currency": (fields["salary_currency"] or "PLN").upper()[:3],
+        "salary_kind": fields["salary_kind"] or None,
+        "salary_period": fields["salary_period"] or None,
+        "contract": fields["contract"] or None,
+    }
+
+
+def _application_payload(fields: dict[str, Any]) -> dict[str, Any]:
+    """The application's own columns. Status is not among them — it moves only
+    through `change_status`, so the history stays a true account."""
+    return {
+        "cv_document_id": fields["cv_document_id"] or None,
+        "declared_salary": fields["declared_salary"],
+        "declared_salary_kind": fields["declared_salary_kind"] or None,
+        "declared_salary_period": fields["declared_salary_period"] or None,
+        "declared_contract": fields["declared_contract"] or None,
+        "blocked_reason": fields["blocked_reason"] or None,
+        "notes": fields["notes"] or None,
+    }
+
+
+def create_application(token: str, user_id: str, *, status: str, **fields: Any) -> str:
     """Create the offer and the application together.
 
     The common case is recording something already sent, so both rows are
     written in one step rather than making the user create an offer first.
     """
     client = user_client(token)
-    company_id = find_or_create_company(token, user_id, company_name)
+    company_id = find_or_create_company(token, user_id, fields["company_name"])
 
     offer = (
         client.table("offers")
@@ -146,27 +153,19 @@ def create_application(
             {
                 "user_id": user_id,
                 "company_id": company_id,
-                "title": title.strip(),
-                "source": source,
-                "url": url or None,
-                "location": location or None,
-                "mode": mode or None,
-                "level": level or None,
-                "expires_at": expires_at or None,
-                "salary_min": salary_min,
-                "salary_max": salary_max,
-                "salary_currency": (salary_currency or "PLN").upper()[:3],
-                "salary_kind": salary_kind or None,
-                "salary_period": salary_period or None,
-                "contract": contract or None,
                 "status": "applied",
+                **_offer_payload(fields),
             }
         )
         .execute()
     )
     offer_id = offer.data[0]["id"]
 
-    submitted_at = _now() if status not in {"draft", "blocked"} else None
+    # A given date wins: someone entering last month's applications needs them
+    # dated last month, or every one of them looks unanswered at once.
+    submitted_at = fields.get("submitted_at")
+    if not submitted_at and status not in {"draft", "blocked"}:
+        submitted_at = _now()
 
     application = (
         client.table("applications")
@@ -174,15 +173,9 @@ def create_application(
             {
                 "user_id": user_id,
                 "offer_id": offer_id,
-                "cv_document_id": cv_document_id or None,
                 "status": status,
                 "submitted_at": submitted_at,
-                "declared_salary": declared_salary,
-                "declared_salary_kind": declared_salary_kind or None,
-                "declared_salary_period": declared_salary_period or None,
-                "declared_contract": declared_contract or None,
-                "blocked_reason": blocked_reason or None,
-                "notes": notes or None,
+                **_application_payload(fields),
             }
         )
         .execute()
@@ -191,6 +184,46 @@ def create_application(
 
     _record_status(client, user_id, application_id, None, status, "manual", None)
     return application_id
+
+
+def update_application(token: str, user_id: str, application_id: str, **fields: Any) -> None:
+    """Correct the details of an application and the offer behind it.
+
+    A typo in a company name is not an event in the search, so nothing is
+    written to the history here. Status is untouched for the same reason.
+    """
+    client = user_client(token)
+
+    current = (
+        client.table("applications").select("offer_id").eq("id", application_id).limit(1).execute()
+    )
+    if not current.data:
+        raise ValueError("Application not found")
+
+    company_id = find_or_create_company(token, user_id, fields["company_name"])
+    client.table("offers").update({"company_id": company_id, **_offer_payload(fields)}).eq(
+        "id", current.data[0]["offer_id"]
+    ).execute()
+
+    client.table("applications").update(
+        {"submitted_at": fields.get("submitted_at") or None, **_application_payload(fields)}
+    ).eq("id", application_id).execute()
+
+
+def delete_application(token: str, application_id: str) -> None:
+    """Remove an application, its offer and its history.
+
+    Deleting the offer cascades to both, so nothing is left orphaned. The
+    company row stays: it may be attached to other applications, and an empty
+    company is harmless.
+    """
+    client = user_client(token)
+    current = (
+        client.table("applications").select("offer_id").eq("id", application_id).limit(1).execute()
+    )
+    if not current.data:
+        return
+    client.table("offers").delete().eq("id", current.data[0]["offer_id"]).execute()
 
 
 def change_status(

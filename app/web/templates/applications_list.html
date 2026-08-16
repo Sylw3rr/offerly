@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Applications — Offerly{% endblock %}
+{% block body %}
+<main>
+  <div class="row-between">
+    <h1>Applications</h1>
+    <a class="btn" href="/applications/new">Add application</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="num">{{ stats.total }}</span><span class="lbl">tracked</span></div>
+    <div class="stat"><span class="num">{{ stats.sent }}</span><span class="lbl">sent</span></div>
+    <div class="stat"><span class="num">{{ stats.responded }}</span><span class="lbl">replied</span></div>
+    <div class="stat">
+      <span class="num">{% if stats.response_rate is not none %}{{ stats.response_rate }}%{% else %}—{% endif %}</span>
+      <span class="lbl">response rate</span>
+    </div>
+  </div>
+
+  <div class="filters">
+    <a class="chip {% if not active_status %}on{% endif %}" href="/applications">All</a>
+    {% for value, label in statuses %}
+      {% if stats.by_status.get(value) %}
+        <a class="chip {% if active_status == value %}on{% endif %}"
+           href="/applications?status={{ value }}">{{ label }} ({{ stats.by_status[value] }})</a>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if applications %}
+    <table>
+      <thead>
+        <tr><th>Company</th><th>Role</th><th>Source</th><th>CV</th><th>Declared</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+      {% for a in applications %}
+        {% set offer = a.offers %}
+        <tr onclick="location.href='/applications/{{ a.id }}'">
+          <td><strong>{{ offer.companies.name if offer.companies else '—' }}</strong></td>
+          <td>{{ offer.title }}{% if offer.location %}<span class="dim"> · {{ offer.location }}</span>{% endif %}</td>
+          <td class="dim">{{ offer.source }}</td>
+          <td class="dim">{{ a.documents.label if a.documents else '—' }}</td>
+          <td class="dim">
+            {% if a.declared_salary %}
+              {{ a.declared_salary | round | int }}
+              {{ a.declared_salary_kind or '' }}{% if a.declared_salary_period %}/{{ a.declared_salary_period }}{% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td><span class="badge s-{{ a.status }}">{{ a.status }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">
+      Nothing here yet. <a href="/applications/new">Add your first application</a> —
+      or an offer you are still deciding on.
+    </p>
+  {% endif %}
+</main>
+{% endblock %}

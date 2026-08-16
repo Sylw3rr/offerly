@@ -55,3 +55,16 @@ never reach a browser or a mobile client.
 | File | Adds |
 |---|---|
 | `0001_initial_schema.sql` | profiles, companies, documents, offers, applications, status_events, profile_answers, reminders + RLS |
+| `0002_invites.sql` | invite codes and the `redeem_invite` function |
+| `0003_grants.sql` | table privileges for the `authenticated` role |
+
+## Privileges and policies are not the same thing
+
+A missing `GRANT` produces `permission denied for table …` (SQLSTATE 42501) even
+when the row level security policies are correct. `GRANT` decides whether a role may
+touch a table; policies decide which rows it then sees. Both are required.
+
+Projects created with *Automatically expose new tables* enabled receive these grants
+implicitly. This project has that switched off, so `0003_grants.sql` states them
+explicitly — the privileges live in the repository rather than in a dashboard
+setting, and they mirror the policies exactly.

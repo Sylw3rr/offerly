@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Add application — Offerly{% endblock %}
+{% block body %}
+<main>
+  <h1>Add application</h1>
+  <p class="sub">Record something you sent, or an offer you are still deciding on.</p>
+
+  <form method="post" action="/applications/new" class="form-wide">
+    <fieldset>
+      <legend>The offer</legend>
+      <div class="grid2">
+        <div>
+          <label for="company_name">Company *</label>
+          <input id="company_name" name="company_name" required autofocus>
+        </div>
+        <div>
+          <label for="title">Role *</label>
+          <input id="title" name="title" required>
+        </div>
+        <div>
+          <label for="source">Source</label>
+          <select id="source" name="source">
+            {% for v, l in sources %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="location">Location</label>
+          <input id="location" name="location" placeholder="Gliwice">
+        </div>
+        <div>
+          <label for="mode">Work mode</label>
+          <select id="mode" name="mode">
+            {% for v, l in modes %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="level">Level</label>
+          <select id="level" name="level">
+            {% for v, l in levels %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="url">Link</label>
+          <input id="url" name="url" type="url" placeholder="https://">
+        </div>
+        <div>
+          <label for="expires_at">Offer closes</label>
+          <input id="expires_at" name="expires_at" type="date">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>What you sent</legend>
+      <div class="grid2">
+        <div>
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {% for v, l in statuses %}
+              <option value="{{ v }}" {% if v == 'submitted' %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="cv_document_id">CV version</label>
+          <select id="cv_document_id" name="cv_document_id">
+            <option value="">—</option>
+            {% for d in documents %}<option value="{{ d.id }}">{{ d.label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="blocked_reason">If blocked, what is needed?</label>
+          <input id="blocked_reason" name="blocked_reason" placeholder="External form, CV upload by hand">
+        </div>
+        <div></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Salary you declared</legend>
+      <p class="hint">
+        Kept separate from the advertised range: employers ask in different units,
+        and what you quoted is what matters later.
+      </p>
+      <div class="grid4">
+        <div>
+          <label for="declared_salary">Amount</label>
+          <input id="declared_salary" name="declared_salary" inputmode="decimal" placeholder="10000">
+        </div>
+        <div>
+          <label for="declared_salary_kind">Gross / net</label>
+          <select id="declared_salary_kind" name="declared_salary_kind">
+            {% for v, l in salary_kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="declared_salary_period">Per</label>
+          <select id="declared_salary_period" name="declared_salary_period">
+            {% for v, l in salary_periods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="declared_contract">Contract</label>
+          <select id="declared_contract" name="declared_contract">
+            {% for v, l in contracts %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="3"></textarea>
+
+    <div class="actions">
+      <button type="submit">Save</button>
+      <a class="cancel" href="/applications">Cancel</a>
+    </div>
+  </form>
+
+  <details class="cv-add">
+    <summary>Add a CV version</summary>
+    <form method="post" action="/documents/new" class="inline-form">
+      <input name="label" placeholder="e.g. Sales B2B, Helpdesk, AI automation" required>
+      <button type="submit">Add</button>
+    </form>
+  </details>
+</main>
+{% endblock %}

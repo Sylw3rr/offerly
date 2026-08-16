@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set offer = application.offers %}
+{% block title %}{{ offer.title }} — Offerly{% endblock %}
+{% block body %}
+<main>
+  <p><a class="back" href="/applications">← All applications</a></p>
+
+  <h1>{{ offer.title }}</h1>
+  <p class="sub">
+    {{ offer.companies.name if offer.companies else '—' }}
+    {% if offer.location %} · {{ offer.location }}{% endif %}
+    {% if offer.mode %} · {{ offer.mode }}{% endif %}
+    {% if offer.level %} · {{ offer.level }}{% endif %}
+  </p>
+
+  <div class="panels">
+    <section class="panel">
+      <h2>Details</h2>
+      <dl>
+        <dt>Status</dt><dd><span class="badge s-{{ application.status }}">{{ application.status }}</span></dd>
+        <dt>Source</dt><dd>{{ offer.source }}</dd>
+        {% if offer.url %}<dt>Link</dt><dd><a href="{{ offer.url }}" target="_blank" rel="noopener">Open offer</a></dd>{% endif %}
+        <dt>CV sent</dt><dd>{{ application.documents.label if application.documents else '—' }}</dd>
+        <dt>Declared</dt>
+        <dd>
+          {% if application.declared_salary %}
+            {{ application.declared_salary | round | int }}
+            {{ application.declared_salary_kind or '' }}{% if application.declared_salary_period %}/{{ application.declared_salary_period }}{% endif %}
+            {% if application.declared_contract %} · {{ application.declared_contract }}{% endif %}
+          {% else %}—{% endif %}
+        </dd>
+        <dt>Submitted</dt><dd>{{ application.submitted_at[:10] if application.submitted_at else '—' }}</dd>
+        {% if offer.expires_at %}<dt>Offer closes</dt><dd>{{ offer.expires_at }}</dd>{% endif %}
+        {% if application.blocked_reason %}
+          <dt>Blocked by</dt><dd>{{ application.blocked_reason }}</dd>
+        {% endif %}
+      </dl>
+      {% if application.notes %}<p class="notes">{{ application.notes }}</p>{% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Change status</h2>
+      <form method="post" action="/applications/{{ application.id }}/status">
+        <label for="status">New status</label>
+        <select id="status" name="status">
+          {% for v, l in statuses %}
+            <option value="{{ v }}" {% if v == application.status %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+        <label for="note">Note</label>
+        <input id="note" name="note" placeholder="optional">
+        <button type="submit">Update</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>History</h2>
+    <p class="hint">Append-only — entries cannot be edited or removed.</p>
+    <ul class="timeline">
+      {% for event in history %}
+        <li>
+          <span class="when">{{ event.created_at[:16] | replace('T', ' ') }}</span>
+          {% if event.from_status %}{{ event.from_status }} → {% endif %}
+          <strong>{{ event.to_status }}</strong>
+          <span class="dim">({{ event.source }})</span>
+          {% if event.note %}<div class="dim">{{ event.note }}</div>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+</main>
+{% endblock %}

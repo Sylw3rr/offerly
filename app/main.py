@@ -6,10 +6,10 @@ Entry point. Routers are mounted here as they are built.
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from app.auth.dependencies import _RedirectToLogin, get_current_user
+from app.auth.dependencies import _RedirectToLogin, get_current_user, set_session_cookies
 from app.config import get_settings
+from app.web.routes_applications import router as applications_router
 from app.web.routes_auth import router as auth_router
-from app.web.templates import templates
 
 settings = get_settings()
 
@@ -20,6 +20,22 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(applications_router)
+
+
+@app.middleware("http")
+async def persist_refreshed_session(request: Request, call_next):
+    """Write rotated tokens back to the browser.
+
+    `get_current_user` refreshes an expired access token and leaves the new
+    pair on request.state; without this the refresh would happen on every
+    request instead of once.
+    """
+    response = await call_next(request)
+    session = getattr(request.state, "refreshed_session", None)
+    if session is not None:
+        set_session_cookies(response, session)
+    return response
 
 
 @app.exception_handler(_RedirectToLogin)
@@ -44,4 +60,4 @@ def home(request: Request):
     user = get_current_user(request)
     if user is None:
         return RedirectResponse("/login", status_code=303)
-    return templates.TemplateResponse(request, "dashboard.html", {"user": user})
+    return RedirectResponse("/applications", status_code=303)

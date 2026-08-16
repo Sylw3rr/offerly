@@ -5,6 +5,19 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI declares dependencies and form fields as argument defaults. B008 warns
+# about function calls in defaults, which does not apply to these: they are
+# markers FastAPI reads at import time, not values evaluated per call. Listed
+# individually rather than switching the rule off, so genuine cases still fail.
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Form",
+  "fastapi.Query",
+  "fastapi.Path",
+  "fastapi.File",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Make the project root importable so `from app.main import app` works

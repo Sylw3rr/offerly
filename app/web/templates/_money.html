@@ -1,34 +1,35 @@
 {#
-  Salary formatting, shared by the registry and the dashboard.
+  Salary formatting, shared by the registry, the dashboard and the detail page.
 
   Two amounts that look alike mean different things — what the offer advertised
   and what you asked for — so both go through the same macros and are labelled
-  the same way everywhere.
+  the same way everywhere. Units come from the catalogue, so "gross/month"
+  reads "brutto/mies." without touching the numbers.
 #}
 
 {%- macro amount(value) -%}
 {{ '{:,.0f}'.format(value | float) | replace(',', ' ') }}
 {%- endmacro -%}
 
-{%- macro units(kind, period, currency=None) -%}
-{%- if currency %}{{ currency }}{% endif %}{% if kind %} {{ kind }}{% endif %}{% if period %}/{{ period }}{% endif %}
+{%- macro units(t, kind, period, currency=None) -%}
+{%- if currency %}{{ currency }}{% endif %}{% if kind %} {{ t('money.' ~ kind) }}{% endif %}{% if period %}/{{ t('money.per_' ~ period) }}{% endif %}
 {%- endmacro -%}
 
 {#- The advertised range. Renders nothing at all when the offer had none. -#}
-{%- macro offer_range(offer) -%}
+{%- macro offer_range(t, offer) -%}
 {%- if offer.salary_min and offer.salary_max -%}
-{{ amount(offer.salary_min) }}–{{ amount(offer.salary_max) }} {{ units(offer.salary_kind, offer.salary_period, offer.salary_currency) }}
+{{ amount(offer.salary_min) }}–{{ amount(offer.salary_max) }} {{ units(t, offer.salary_kind, offer.salary_period, offer.salary_currency) }}
 {%- elif offer.salary_min -%}
-from {{ amount(offer.salary_min) }} {{ units(offer.salary_kind, offer.salary_period, offer.salary_currency) }}
+{{ t('money.from') }} {{ amount(offer.salary_min) }} {{ units(t, offer.salary_kind, offer.salary_period, offer.salary_currency) }}
 {%- elif offer.salary_max -%}
-up to {{ amount(offer.salary_max) }} {{ units(offer.salary_kind, offer.salary_period, offer.salary_currency) }}
+{{ t('money.upto') }} {{ amount(offer.salary_max) }} {{ units(t, offer.salary_kind, offer.salary_period, offer.salary_currency) }}
 {%- endif -%}
 {%- endmacro -%}
 
 {#- What was actually quoted to this employer. No currency: the column does not
     exist, and inventing one would be worse than leaving it implied. -#}
-{%- macro declared(application) -%}
+{%- macro declared(t, application) -%}
 {%- if application.declared_salary -%}
-{{ amount(application.declared_salary) }}{{ units(application.declared_salary_kind, application.declared_salary_period) }}
+{{ amount(application.declared_salary) }}{{ units(t, application.declared_salary_kind, application.declared_salary_period) }}
 {%- endif -%}
 {%- endmacro -%}

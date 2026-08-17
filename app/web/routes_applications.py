@@ -1,5 +1,6 @@
 """The application registry."""
 
+from datetime import UTC, date, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -7,7 +8,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.auth.dependencies import CurrentUser, require_user
 from app.db import repositories as repo
-from app.web.templates import templates
+from app.i18n import template_globals
+from app.web.templates import render
 
 router = APIRouter(tags=["applications"])
 
@@ -163,22 +165,70 @@ def application_fields(
     }
 
 
+def _matches(application: dict[str, Any], needle: str) -> bool:
+    """Search over what someone would actually remember: who, what, where."""
+    offer = application.get("offers") or {}
+    company = (offer.get("companies") or {}).get("name") or ""
+    haystack = " ".join(
+        [
+            company,
+            offer.get("title") or "",
+            offer.get("location") or "",
+            application.get("notes") or "",
+        ]
+    )
+    return needle in haystack.lower()
+
+
+def _moved_label(t, moved_at: str | None, today: date) -> str:
+    """How long ago this application last changed status, in words."""
+    if not moved_at:
+        return t("moved.never")
+    try:
+        moved = date.fromisoformat(moved_at[:10])
+    except ValueError:
+        return t("moved.never")
+
+    days = (today - moved).days
+    if days <= 0:
+        return t("moved.today")
+    if days == 1:
+        return t("moved.yesterday")
+    return t("moved.days", days=days)
+
+
 @router.get("/applications", response_class=HTMLResponse)
 def list_applications(
     request: Request,
     status: str | None = None,
+    q: str = "",
     user: CurrentUser = Depends(require_user),
 ):
-    applications = repo.list_applications(user.access_token, status)
-    stats = repo.funnel_stats(user.access_token)
-    return templates.TemplateResponse(
+    token = user.access_token
+    applications = repo.list_applications(token, status)
+
+    needle = q.strip().lower()
+    if needle:
+        # Filtered here rather than in the query: the embedded company name is
+        # awkward to search through PostgREST, and one person's registry is
+        # tens of rows, not thousands.
+        applications = [a for a in applications if _matches(a, needle)]
+
+    t = template_globals(request)["t"]
+    moves = repo.last_moves(token)
+    today = datetime.now(UTC).date()
+    for application in applications:
+        application["moved_label"] = _moved_label(t, moves.get(application["id"]), today)
+
+    return render(
         request,
         "applications_list.html",
         {
             "user": user,
             "applications": applications,
-            "stats": stats,
+            "stats": repo.funnel_stats(token),
             "active_status": status,
+            "q": q.strip(),
             "statuses": APPLICATION_STATUSES,
         },
     )
@@ -186,16 +236,17 @@ def list_applications(
 
 @router.get("/applications/new", response_class=HTMLResponse)
 def new_application_form(request: Request, user: CurrentUser = Depends(require_user)):
-    return templates.TemplateResponse(
+    t = template_globals(request)["t"]
+    return render(
         request,
         "application_form.html",
         {
             "user": user,
             "documents": repo.list_documents(user.access_token),
-            "heading": "Add application",
-            "intro": "Record something you sent, or an offer you are still deciding on.",
+            "heading": t("form.heading_new"),
+            "intro": t("form.intro_new"),
             "action": "/applications/new",
-            "submit_label": "Save",
+            "submit_label": t("action.save"),
             "cancel_url": "/applications",
             "form": {},
             "editing": False,
@@ -226,16 +277,17 @@ def edit_application_form(
 
     offer = application.get("offers") or {}
     company = offer.get("companies") or {}
-    return templates.TemplateResponse(
+    t = template_globals(request)["t"]
+    return render(
         request,
         "application_form.html",
         {
             "user": user,
             "documents": repo.list_documents(user.access_token),
-            "heading": "Edit application",
-            "intro": "Correcting a detail changes the record, not its history.",
+            "heading": t("form.heading_edit"),
+            "intro": t("form.intro_edit"),
             "action": f"/applications/{application_id}/edit",
-            "submit_label": "Save changes",
+            "submit_label": t("action.save_change"),
             "cancel_url": f"/applications/{application_id}",
             "editing": True,
             "form": {
@@ -295,7 +347,7 @@ def application_detail(
     application = repo.get_application(user.access_token, application_id)
     if application is None:
         return RedirectResponse("/applications", status_code=303)
-    return templates.TemplateResponse(
+    return render(
         request,
         "application_detail.html",
         {

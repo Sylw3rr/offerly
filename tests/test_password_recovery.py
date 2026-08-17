@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from app.auth import service
 from app.main import app
 
-client = TestClient(app)
+client = TestClient(app, cookies={"lang": "en"})
 
 
 def test_sign_in_page_links_to_recovery():
@@ -56,7 +56,7 @@ def test_the_link_points_back_at_this_installation(monkeypatch):
 def test_reset_page_without_a_token_explains_itself_instead_of_showing_a_dead_form():
     response = client.get("/reset-password")
     assert response.status_code == 200
-    assert "missing its token" in response.text
+    assert "Open the link from the email again" in response.text
     assert 'name="password"' not in response.text
 
 
@@ -80,7 +80,7 @@ def test_mismatched_passwords_are_caught_before_the_token_is_spent(monkeypatch):
 
 def test_an_expired_link_says_so(monkeypatch):
     def refuse(token_hash, password):
-        raise service.AuthError("This link has expired or has already been used.")
+        raise service.AuthError("auth.error_link_expired")
 
     monkeypatch.setattr(service, "reset_password", refuse)
     response = client.post(
@@ -116,6 +116,6 @@ def test_a_short_password_is_refused_without_touching_the_network():
     try:
         service.reset_password("token", "short")
     except service.AuthError as exc:
-        assert "at least 10" in str(exc)
+        assert str(exc) == "auth.error_short_password"
     else:  # pragma: no cover - the guard is the point of the test
         raise AssertionError("a five-character password was accepted")

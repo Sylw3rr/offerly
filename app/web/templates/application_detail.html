@@ -1,90 +1,133 @@
 {% extends "base.html" %}
+{% import "_icons.html" as ic %}
 {% import "_money.html" as money %}
 {% set offer = application.offers %}
 {% block title %}{{ offer.title }} — Offerly{% endblock %}
 {% block body %}
 <main>
-  <p><a class="back" href="/applications">← All applications</a></p>
+  <a href="/applications" class="btn btn-ghost" style="justify-self:start">{{ ic.icon('arrow-left') }}{{ t('detail.back') }}</a>
 
-  <div class="row-between">
-    <h1>{{ offer.title }}</h1>
-    <a class="btn" href="/applications/{{ application.id }}/edit">Edit</a>
+  <div class="page-head">
+    <div>
+      <div class="row">
+        <h1 style="margin:0">{{ offer.title }}</h1>
+        <span class="tag {{ 'tag-accent' if application.status in ('interview','offer') else 'tag-neutral' }}">{{ t('status.' ~ application.status) }}</span>
+      </div>
+      <p>
+        {{ offer.companies.name if offer.companies else t('none') }}
+        {%- if offer.location %} · {{ offer.location }}{% endif %}
+        {%- if offer.mode %} · {{ t('mode.' ~ offer.mode) }}{% endif %}
+        {%- if offer.level %} · {{ t('level.' ~ offer.level) }}{% endif %}
+        {%- if offer.source %} · {{ t('source.' ~ offer.source) }}{% endif %}
+      </p>
+    </div>
+    <div class="row">
+      {% if offer.url %}
+        <a class="btn btn-secondary" href="{{ offer.url }}" target="_blank" rel="noopener">
+          {{ ic.icon('external') }}{{ t('detail.open_offer') }}
+        </a>
+      {% endif %}
+      <a class="btn btn-primary" href="/applications/{{ application.id }}/edit">{{ ic.icon('pencil') }}{{ t('action.edit') }}</a>
+    </div>
   </div>
-  <p class="sub">
-    {{ offer.companies.name if offer.companies else '—' }}
-    {% if offer.location %} · {{ offer.location }}{% endif %}
-    {% if offer.mode %} · {{ offer.mode }}{% endif %}
-    {% if offer.level %} · {{ offer.level }}{% endif %}
-  </p>
 
-  <div class="panels">
-    <section class="panel">
-      <h2>Details</h2>
-      <dl>
-        <dt>Status</dt><dd><span class="badge s-{{ application.status }}">{{ application.status }}</span></dd>
-        <dt>Source</dt><dd>{{ offer.source }}</dd>
-        {% if offer.url %}<dt>Link</dt><dd><a href="{{ offer.url }}" target="_blank" rel="noopener">Open offer</a></dd>{% endif %}
-        <dt>CV sent</dt><dd>{{ application.documents.label if application.documents else '—' }}</dd>
-        <dt>Advertised</dt>
-        <dd>
-          {{ money.offer_range(offer) | trim or '—' }}
-          {%- if offer.contract %} · {{ offer.contract }}{% endif %}
-        </dd>
-        <dt>Declared</dt>
-        <dd>
-          {{ money.declared(application) | trim or '—' }}
-          {%- if application.declared_contract %} · {{ application.declared_contract }}{% endif %}
-        </dd>
-        <dt>Submitted</dt><dd>{{ application.submitted_at[:10] if application.submitted_at else '—' }}</dd>
-        {% if offer.expires_at %}<dt>Offer closes</dt><dd>{{ offer.expires_at }}</dd>{% endif %}
-        {% if application.blocked_reason %}
-          <dt>Blocked by</dt><dd>{{ application.blocked_reason }}</dd>
-        {% endif %}
-      </dl>
-      {% if application.notes %}<p class="notes">{{ application.notes }}</p>{% endif %}
-    </section>
+  <div class="split-b">
+    <div class="stack">
+      <section class="card">
+        <h2>{{ t('detail.money') }}</h2>
+        <div class="grid-auto">
+          <div class="tile">
+            <span class="tile-label">{{ t('col.advertised') }}</span>
+            <span class="tile-value">{{ money.offer_range(t, offer) | trim or t('none') }}</span>
+            {% if offer.contract %}<span class="muted" style="font-size:12.5px">{{ t('contract.' ~ offer.contract) }}</span>{% endif %}
+          </div>
+          <div class="tile accent">
+            <span class="tile-label">{{ t('detail.you_declared') }}</span>
+            <span class="tile-value">{{ money.declared(t, application) | trim or t('none') }}</span>
+            {% if application.declared_contract %}<span class="muted" style="font-size:12.5px">{{ t('contract.' ~ application.declared_contract) }}</span>{% endif %}
+          </div>
+        </div>
+      </section>
 
-    <section class="panel">
-      <h2>Change status</h2>
-      <form method="post" action="/applications/{{ application.id }}/status">
-        <label for="status">New status</label>
-        <select id="status" name="status">
-          {% for v, l in statuses %}
-            <option value="{{ v }}" {% if v == application.status %}selected{% endif %}>{{ l }}</option>
+      <section class="card">
+        <div class="row" style="align-items:baseline">
+          <h2>{{ t('detail.history') }}</h2>
+          <span class="muted-2" style="margin-left:auto;font-size:12.5px">{{ t('detail.append_only') }}</span>
+        </div>
+        <ul class="timeline">
+          {% for event in history %}
+            <li>
+              <span class="dot"></span>
+              <span style="display:grid;gap:3px">
+                <span class="what">
+                  {% if event.from_status %}{{ t('status.' ~ event.from_status) }} → {% endif %}<strong style="font-weight:500">{{ t('status.' ~ event.to_status) }}</strong>
+                  {% if event.note %}— {{ event.note }}{% endif %}
+                </span>
+                <span class="when">{{ event.created_at[:16] | replace('T', ' ') }} · {{ t('source_kind.' ~ event.source) }}</span>
+              </span>
+              <span class="line"></span>
+            </li>
           {% endfor %}
-        </select>
-        <label for="note">Note</label>
-        <input id="note" name="note" placeholder="optional">
-        <button type="submit">Update</button>
-      </form>
-    </section>
+        </ul>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card">
+        <h2>{{ t('detail.change_status') }}</h2>
+        <form method="post" action="/applications/{{ application.id }}/status" class="stack" style="gap:14px">
+          <div class="field">
+            <label for="status">{{ t('detail.new_status') }}</label>
+            <select class="input" id="status" name="status">
+              {% for v, label in statuses %}
+                <option value="{{ v }}" {% if v == application.status %}selected{% endif %}>{{ t('status.' ~ v) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="note">{{ t('detail.note') }}</label>
+            <input class="input" id="note" name="note" placeholder="{{ t('detail.note_placeholder') }}">
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">{{ t('action.save_change') }}</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>{{ t('detail.details') }}</h2>
+        <dl style="display:grid;grid-template-columns:auto 1fr;gap:10px 18px;margin:0;font-size:14px">
+          <dt class="muted" style="font-size:12.5px">{{ t('col.cv') }}</dt>
+          <dd style="margin:0">{{ application.documents.label if application.documents else t('none') }}</dd>
+          <dt class="muted" style="font-size:12.5px">{{ t('detail.submitted') }}</dt>
+          <dd style="margin:0">{{ application.submitted_at[:10] if application.submitted_at else t('none') }}</dd>
+          {% if offer.expires_at %}
+            <dt class="muted" style="font-size:12.5px">{{ t('detail.closes') }}</dt>
+            <dd style="margin:0">{{ offer.expires_at }}</dd>
+          {% endif %}
+          {% if application.blocked_reason %}
+            <dt class="muted" style="font-size:12.5px">{{ t('detail.blocked_by') }}</dt>
+            <dd style="margin:0">{{ application.blocked_reason }}</dd>
+          {% endif %}
+        </dl>
+        {% if application.notes %}
+          <div class="hr"></div>
+          <p class="muted" style="margin:0;font-size:13.5px;white-space:pre-wrap">{{ application.notes }}</p>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h2 style="font-size:16px">{{ t('detail.delete_title') }}</h2>
+        <p class="muted" style="margin:0;font-size:13px">{{ t('detail.delete_body') }}</p>
+        <form method="post" action="/applications/{{ application.id }}/delete"
+              data-confirm-title="{{ t('confirm.delete_application_title') }}"
+              data-confirm-body="{{ t('confirm.delete_application_body') }}"
+              data-confirm-ok="{{ t('confirm.delete_ok') }}"
+              data-confirm-cancel="{{ t('confirm.keep') }}">
+          <button class="btn btn-quiet-danger" style="justify-self:start" type="submit">
+            {{ ic.icon('trash') }}{{ t('action.delete') }}
+          </button>
+        </form>
+      </section>
+    </div>
   </div>
-
-  <section class="panel danger">
-    <h2>Remove this application</h2>
-    <p class="hint">
-      Deletes the offer, the application and its history. Nothing here can be recovered.
-    </p>
-    <form method="post" action="/applications/{{ application.id }}/delete"
-          onsubmit="return confirm('Delete this application and its history? This cannot be undone.')">
-      <button type="submit" class="destructive">Delete application</button>
-    </form>
-  </section>
-
-  <section class="panel">
-    <h2>History</h2>
-    <p class="hint">Append-only — entries cannot be edited or removed.</p>
-    <ul class="timeline">
-      {% for event in history %}
-        <li>
-          <span class="when">{{ event.created_at[:16] | replace('T', ' ') }}</span>
-          {% if event.from_status %}{{ event.from_status }} → {% endif %}
-          <strong>{{ event.to_status }}</strong>
-          <span class="dim">({{ event.source }})</span>
-          {% if event.note %}<div class="dim">{{ event.note }}</div>{% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-  </section>
 </main>
 {% endblock %}

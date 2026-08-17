@@ -3,8 +3,11 @@
 Entry point. Routers are mounted here as they are built.
 """
 
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.auth.dependencies import _RedirectToLogin, get_current_user, set_session_cookies
 from app.config import get_settings
@@ -20,6 +23,12 @@ app = FastAPI(
     title="Offerly",
     description="Job application tracker that reads your inbox so you don't have to.",
     version="0.1.0",
+)
+
+app.mount(
+    "/static",
+    StaticFiles(directory=Path(__file__).parent / "web" / "static"),
+    name="static",
 )
 
 app.include_router(auth_router)

@@ -13,8 +13,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.auth import service
 from app.auth.dependencies import CurrentUser, clear_session_cookies, require_user
+from app.config import get_settings
 from app.db import repositories as repo
-from app.web.templates import templates
+from app.i18n import LANG_COOKIE, SUPPORTED, template_globals
+from app.web.templates import render
 
 router = APIRouter(tags=["account"])
 
@@ -64,8 +66,29 @@ def _csv_response(filename: str, header: list[str], rows: list[list[object]]) ->
 
 
 @router.get("/account", response_class=HTMLResponse)
-def account(request: Request, user: CurrentUser = Depends(require_user), error: str | None = None):
-    return templates.TemplateResponse(request, "account.html", {"user": user, "error": error})
+def account(request: Request, user: CurrentUser = Depends(require_user)):
+    return render(request, "account.html", {"user": user, "error": None})
+
+
+@router.post("/account/preferences")
+def save_preferences(lang: str = Form("pl"), user: CurrentUser = Depends(require_user)):
+    """Interface language, kept in a cookie rather than a column.
+
+    It is a display preference, not part of the record, and a cookie means the
+    sign-in screen can already be in the right language before there is anyone
+    to look a profile up for.
+    """
+    response = RedirectResponse("/account", status_code=303)
+    if lang in SUPPORTED:
+        response.set_cookie(
+            LANG_COOKIE,
+            lang,
+            max_age=60 * 60 * 24 * 365,
+            samesite="lax",
+            secure=get_settings().app_env != "development",
+            path="/",
+        )
+    return response
 
 
 @router.get("/account/applications.csv")
@@ -127,10 +150,11 @@ def delete_account(
     session, never from this form — the field is only ever compared.
     """
     if confirm_email.strip().lower() != user.email.lower():
-        return templates.TemplateResponse(
+        t = template_globals(request)["t"]
+        return render(
             request,
             "account.html",
-            {"user": user, "error": "That is not the address this account signs in with."},
+            {"user": user, "error": t("account.error_wrong_email")},
             status_code=400,
         )
 

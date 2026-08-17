@@ -10,32 +10,42 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.auth.dependencies import CurrentUser, require_user
 from app.db import repositories as repo
-from app.web.templates import templates
+from app.i18n import template_globals
+from app.web.templates import render
 
 router = APIRouter(tags=["answers"])
 
-# Shown on an empty list. Suggestions only — nothing is created automatically.
-SUGGESTED_LABELS = [
-    "Notice period",
-    "Expected salary",
-    "Earliest start date",
-    "Willing to relocate",
-    "Driving licence",
-    "English level",
-    "GDPR clause",
+# Offered as chips under the label field. Suggestions only — pressing one fills
+# the box, nothing is created until the form is saved.
+SUGGESTED_KEYS = [
+    "suggest.notice_period",
+    "suggest.expected_salary",
+    "suggest.start_date",
+    "suggest.relocate",
+    "suggest.driving_licence",
+    "suggest.english",
+    "suggest.gdpr",
 ]
 
 
-def _render(request: Request, user: CurrentUser, error: str | None = None):
-    return templates.TemplateResponse(
+def _render(
+    request: Request,
+    user: CurrentUser,
+    error_key: str | None = None,
+    status_code: int = 200,
+    **error_args: str,
+):
+    t = template_globals(request)["t"]
+    return render(
         request,
         "answers.html",
         {
             "user": user,
             "answers": repo.list_profile_answers(user.access_token),
-            "suggestions": SUGGESTED_LABELS,
-            "error": error,
+            "suggestions": [t(key) for key in SUGGESTED_KEYS],
+            "error": t(error_key, **error_args) if error_key else None,
         },
+        status_code=status_code,
     )
 
 
@@ -52,13 +62,13 @@ def create_answer(
     user: CurrentUser = Depends(require_user),
 ):
     if not label.strip() or not value.strip():
-        return _render(request, user, "Both a label and an answer are needed.")
+        return _render(request, user, "answers.error_empty")
     try:
         repo.create_profile_answer(user.access_token, user.id, label, value)
     except Exception:
         # The only constraint that can realistically fail here is the unique
         # (user_id, label) pair; say so rather than showing a database error.
-        return _render(request, user, f"You already have an answer labelled “{label.strip()}”.")
+        return _render(request, user, "answers.error_duplicate", label=label.strip())
     return RedirectResponse("/answers", status_code=303)
 
 
@@ -71,11 +81,11 @@ def update_answer(
     user: CurrentUser = Depends(require_user),
 ):
     if not label.strip() or not value.strip():
-        return _render(request, user, "Both a label and an answer are needed.")
+        return _render(request, user, "answers.error_empty")
     try:
         repo.update_profile_answer(user.access_token, answer_id, label, value)
     except Exception:
-        return _render(request, user, f"You already have an answer labelled “{label.strip()}”.")
+        return _render(request, user, "answers.error_duplicate", label=label.strip())
     return RedirectResponse("/answers", status_code=303)
 
 

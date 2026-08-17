@@ -1,0 +1,29 @@
+{#
+  Command palette — ⌘K.
+
+  The handoff package had this fetch matching records from a /search endpoint.
+  It filters the list it already holds instead: no round trip, no endpoint to
+  build, and it still answers the question the palette is actually for — how do
+  I get to that screen without reaching for the mouse.
+#}
+{% import "_icons.html" as ic %}
+<div class="palette-backdrop" id="palette" hidden>
+  <div class="card palette" role="dialog" aria-modal="true" aria-label="{{ t('palette.label') }}">
+    <div class="palette-input">
+      {{ ic.icon('search') }}
+      <input class="input" type="text" placeholder="{{ t('palette.placeholder') }}"
+             aria-label="{{ t('palette.placeholder') }}">
+      <span class="kbd">esc</span>
+    </div>
+    <div class="hr" style="margin:0"></div>
+    <div class="palette-list">
+      <div class="group">{{ t('palette.actions') }}</div>
+      <a class="palette-item" href="/applications/new">{{ ic.icon('plus') }}{{ t('action.add_application') }}</a>
+      <a class="palette-item" href="/dashboard">{{ ic.icon('squares-four') }}{{ t('nav.dashboard') }}</a>
+      <a class="palette-item" href="/applications">{{ ic.icon('list-checks') }}{{ t('nav.applications') }}</a>
+      <a class="palette-item" href="/answers">{{ ic.icon('chat-text') }}{{ t('nav.answers') }}</a>
+      <a class="palette-item" href="/account">{{ ic.icon('user-circle') }}{{ t('nav.account') }}</a>
+      <a class="palette-item" href="/account/applications.csv">{{ ic.icon('download') }}{{ t('action.export_csv') }}</a>
+    </div>
+  </div>
+</div>

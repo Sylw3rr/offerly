@@ -1,73 +1,105 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — Offerly{% endblock %}
+{% import "_icons.html" as ic %}
+{% block title %}{{ t('nav.dashboard') }} — Offerly{% endblock %}
 {% block body %}
 <main>
-  <div class="row-between">
-    <h1>Dashboard</h1>
-    <a class="btn" href="/applications/new">Add application</a>
+  <div class="page-head">
+    <div>
+      <h1>
+        {%- if items | length > 1 -%}
+          {{ t('dash.greeting_busy', name=user.first_name, count=items | length) }}
+        {%- elif items -%}
+          {{ t('dash.greeting_one', name=user.first_name) }}
+        {%- else -%}
+          {{ t('dash.greeting_calm', name=user.first_name) }}
+        {%- endif -%}
+      </h1>
+      <p>{{ t('dash.greeting_sub') }}</p>
+    </div>
+    <a class="btn btn-primary" href="/applications/new">{{ ic.icon('plus') }}{{ t('action.add_application') }}</a>
   </div>
 
-  <section class="panel" style="margin-top:1.5rem">
-    <h2>Needs attention</h2>
-    {% if items %}
-      <ul class="attention">
-        {% for item in items %}
-          <li class="k-{{ item.kind }}">
-            <a href="/applications/{{ item.application_id }}">
-              <span class="who">{{ item.company }}</span>
-              <span class="dim">{{ item.title }}</span>
-              <span class="badge s-{{ item.status }}">{{ item.status }}</span>
-              <span class="why">{{ item.message }}</span>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="clear">
-        Nothing to chase. Applications count as unanswered after
-        {{ ghost_after_days }} days.
-      </p>
-    {% endif %}
-  </section>
+  <div class="split">
+    <section class="card flush">
+      <div class="row" style="padding:0 24px 4px;align-items:baseline">
+        <h2>{{ t('dash.today') }}</h2>
+        <span class="muted-2" style="margin-left:auto;font-size:13px">
+          {% if items | length == 1 %}{{ t('dash.today_one') }}{% elif items %}{{ t('dash.today_count', count=items | length) }}{% endif %}
+        </span>
+      </div>
+      <p class="muted" style="margin:0 24px 16px;font-size:13.5px">{{ t('dash.today_sub') }}</p>
 
-  <div class="stats">
-    <div class="stat"><span class="num">{{ stats.total }}</span><span class="lbl">tracked</span></div>
-    <div class="stat"><span class="num">{{ stats.sent }}</span><span class="lbl">sent</span></div>
-    <div class="stat"><span class="num">{{ stats.responded }}</span><span class="lbl">replied</span></div>
-    <div class="stat">
-      <span class="num">{% if stats.response_rate is not none %}{{ stats.response_rate }}%{% else %}—{% endif %}</span>
-      <span class="lbl">response rate</span>
-    </div>
-    <div class="stat">
-      <span class="num">{{ stats.by_status.get('interview', 0) }}</span>
-      <span class="lbl">interviews</span>
-    </div>
-  </div>
-
-  <section class="panel">
-    <h2>Recent activity</h2>
-    {% if events %}
-      <ul class="timeline">
-        {% for event in events %}
-          {% set application = event.applications %}
-          {% set offer = application.offers if application else none %}
-          <li>
-            <span class="when">{{ event.created_at[:10] }}</span>
-            {% if offer %}
-              <a href="/applications/{{ application.id }}">
-                {{ offer.companies.name if offer.companies else '—' }} · {{ offer.title }}
+      {% if items %}
+        <ul class="attention">
+          {% for item in items %}
+            <li class="k-{{ item.kind }}">
+              <a href="/applications/{{ item.application_id }}">
+                <span class="who">
+                  <strong>{{ item.company }}</strong>
+                  <span>{{ item.title }}</span>
+                </span>
+                <span class="tag {{ 'tag-accent' if item.status in ('interview', 'offer') else 'tag-neutral' }}">{{ t('status.' ~ item.status) }}</span>
+                <span class="why">
+                  {{ item.message(t) }}
+                  <span class="btn btn-ghost">{{ t('attention.action.' ~ item.kind) }}{{ ic.icon('arrow-right') }}</span>
+                </span>
               </a>
-            {% endif %}
-            <span class="dim">
-              {% if event.from_status %}{{ event.from_status }} → {% endif %}{{ event.to_status }}
-            </span>
-            {% if event.note %}<div class="dim">{{ event.note }}</div>{% endif %}
-          </li>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty">
+          {{ ic.icon('coffee') }}
+          <strong>{{ t('dash.empty_title') }}</strong>
+          <p>{{ t('dash.empty_body', days=ghost_after_days) }}</p>
+          <a class="btn btn-secondary" href="/applications/new">{{ t('action.add_application') }}</a>
+        </div>
+      {% endif %}
+    </section>
+
+    <div class="stack">
+      <section class="card">
+        <h2>{{ t('dash.funnel') }}</h2>
+        {% for step in funnel %}
+          <div class="bar-row">
+            <div class="bar-head">
+              <span class="muted">{{ t('funnel.' ~ step.key) }}</span>
+              <span class="nums">{{ step.value }}</span>
+            </div>
+            <div class="bar"><span style="width: {{ step.percent }}%; background: {{ step.fill }}"></span></div>
+          </div>
         {% endfor %}
-      </ul>
-    {% else %}
-      <p class="clear">No activity yet. <a href="/applications/new">Record the first application.</a></p>
-    {% endif %}
-  </section>
+      </section>
+
+      <section class="card">
+        <h2>{{ t('dash.recent') }}</h2>
+        {% if events %}
+          <ul style="list-style:none;margin:0;padding:0;display:grid;gap:14px">
+            {% for event in events %}
+              {% set application = event.applications %}
+              {% set offer = application.offers if application else none %}
+              <li style="display:grid;gap:3px">
+                {% if offer %}
+                  <a href="/applications/{{ application.id }}" style="font-size:14px">
+                    {{ offer.companies.name if offer.companies else t('none') }} · {{ offer.title }}
+                  </a>
+                {% endif %}
+                <span class="muted" style="font-size:12.5px">
+                  {% if event.from_status %}{{ t('status.' ~ event.from_status) }} → {% endif %}{{ t('status.' ~ event.to_status) }} · {{ event.created_at[:10] }}
+                </span>
+                {# The note is why the move happened; without it this list is a
+                   log rather than a memory. #}
+                {% if event.note %}<span class="muted-2" style="font-size:12.5px">{{ event.note }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted" style="margin:0;font-size:13.5px">
+            {{ t('dash.no_activity') }} <a href="/applications/new">{{ t('dash.no_activity_cta') }}</a>
+          </p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
 </main>
 {% endblock %}

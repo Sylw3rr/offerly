@@ -1,59 +1,107 @@
 {% extends "base.html" %}
+{% import "_icons.html" as ic %}
 {% import "_money.html" as money %}
-{% block title %}Applications — Offerly{% endblock %}
+{% block title %}{{ t('nav.applications') }} — Offerly{% endblock %}
 {% block body %}
 <main>
-  <div class="row-between">
-    <h1>Applications</h1>
-    <a class="btn" href="/applications/new">Add application</a>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><span class="num">{{ stats.total }}</span><span class="lbl">tracked</span></div>
-    <div class="stat"><span class="num">{{ stats.sent }}</span><span class="lbl">sent</span></div>
-    <div class="stat"><span class="num">{{ stats.responded }}</span><span class="lbl">replied</span></div>
-    <div class="stat">
-      <span class="num">{% if stats.response_rate is not none %}{{ stats.response_rate }}%{% else %}—{% endif %}</span>
-      <span class="lbl">response rate</span>
+  <div class="page-head">
+    <div>
+      <h1>{{ t('nav.applications') }}</h1>
+      <p>{{ t('list.sub') }}</p>
+    </div>
+    <div class="row">
+      <a class="btn btn-secondary" href="/account/applications.csv">{{ ic.icon('download') }}{{ t('action.export_csv') }}</a>
+      <a class="btn btn-primary" href="/applications/new">{{ ic.icon('plus') }}{{ t('action.add_application') }}</a>
     </div>
   </div>
 
-  <div class="filters">
-    <a class="chip {% if not active_status %}on{% endif %}" href="/applications">All</a>
-    {% for value, label in statuses %}
-      {% if stats.by_status.get(value) %}
-        <a class="chip {% if active_status == value %}on{% endif %}"
-           href="/applications?status={{ value }}">{{ label }} ({{ stats.by_status[value] }})</a>
-      {% endif %}
+  <div class="grid-stats">
+    {% for label, value in [
+      ('list.stat.tracked', stats.total),
+      ('list.stat.sent', stats.sent),
+      ('list.stat.replied', stats.responded),
+      ('list.stat.rate', (stats.response_rate ~ '%') if stats.response_rate is not none else t('none'))] %}
+      <div class="card stat">
+        <span class="tile-label">{{ t(label) }}</span>
+        <span class="stat-num">{{ value }}</span>
+      </div>
     {% endfor %}
   </div>
 
-  {% if applications %}
-    <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Company</th><th>Role</th><th>CV</th><th>Advertised</th><th>Declared</th><th>Status</th></tr>
-      </thead>
-      <tbody>
-      {% for a in applications %}
-        {% set offer = a.offers %}
-        <tr onclick="location.href='/applications/{{ a.id }}'">
-          <td><strong>{{ offer.companies.name if offer.companies else '—' }}</strong></td>
-          <td>{{ offer.title }}{% if offer.location %}<span class="dim"> · {{ offer.location }}</span>{% endif %}</td>
-          <td class="dim">{{ a.documents.label if a.documents else '—' }}</td>
-          <td class="dim money">{{ money.offer_range(offer) | trim or '—' }}</td>
-          <td class="dim money">{{ money.declared(a) | trim or '—' }}</td>
-          <td><span class="badge s-{{ a.status }}">{{ a.status }}</span></td>
-        </tr>
+  <div class="row">
+    {# A plain form: it submits, so search works before any script has run. #}
+    <form class="search" method="get" action="/applications" role="search">
+      {{ ic.icon('search') }}
+      <input class="input" type="search" name="q" value="{{ q or '' }}"
+             placeholder="{{ t('list.search') }}" aria-label="{{ t('list.search') }}">
+      {% if active_status %}<input type="hidden" name="status" value="{{ active_status }}">{% endif %}
+    </form>
+    <div class="chips">
+      <a class="chip {% if not active_status %}on{% endif %}"
+         href="/applications{% if q %}?q={{ q }}{% endif %}">{{ t('list.all', count=stats.total) }}</a>
+      {% for value, label in statuses %}
+        {% if stats.by_status.get(value) %}
+          <a class="chip {% if active_status == value %}on{% endif %}"
+             href="/applications?status={{ value }}{% if q %}&q={{ q }}{% endif %}">
+            {{ t('status.' ~ value) }} {{ stats.by_status[value] }}
+          </a>
+        {% endif %}
       {% endfor %}
-      </tbody>
-    </table>
+    </div>
+  </div>
+
+  {% if applications %}
+    <div class="card table-card table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ t('col.company') }}</th>
+            <th>{{ t('col.role') }}</th>
+            <th>{{ t('col.cv') }}</th>
+            <th>{{ t('col.advertised') }}</th>
+            <th>{{ t('col.declared') }}</th>
+            <th>{{ t('col.status') }}</th>
+            <th>{{ t('col.moved') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in applications %}
+            {% set offer = a.offers %}
+            <tr onclick="location.href='/applications/{{ a.id }}'">
+              <td class="cell-name name">{{ offer.companies.name if offer.companies else t('none') }}</td>
+              <td data-label="{{ t('col.role') }}">
+                {{ offer.title }}{% if offer.location %}<span class="muted-2"> · {{ offer.location }}</span>{% endif %}
+              </td>
+              <td data-label="{{ t('col.cv') }}" class="muted">{{ a.documents.label if a.documents else t('none') }}</td>
+              <td data-label="{{ t('col.advertised') }}" class="nums muted">{{ money.offer_range(t, offer) | trim or t('none') }}</td>
+              <td data-label="{{ t('col.declared') }}" class="nums muted">{{ money.declared(t, a) | trim or t('none') }}</td>
+              <td class="cell-status">
+                <span class="tag {{ 'tag-accent' if a.status in ('interview','offer') else 'tag-outline' if a.status in ('submitted','acknowledged') else 'tag-neutral' }}">{{ t('status.' ~ a.status) }}</span>
+              </td>
+              <td data-label="{{ t('col.moved') }}" class="muted-2" style="font-size:13px">{{ a.moved_label }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% elif q or active_status %}
+    <div class="card">
+      <div class="empty" style="margin:0">
+        {{ ic.icon('search') }}
+        <strong>{{ t('list.no_match_title') }}</strong>
+        <p>{{ t('list.no_match_body') }}</p>
+        <a class="btn btn-secondary" href="/applications">{{ t('list.clear_search') }}</a>
+      </div>
     </div>
   {% else %}
-    <p class="empty">
-      Nothing here yet. <a href="/applications/new">Add your first application</a> —
-      or an offer you are still deciding on.
-    </p>
+    <div class="card">
+      <div class="empty" style="margin:0">
+        {{ ic.icon('note-pencil') }}
+        <strong>{{ t('list.empty_title') }}</strong>
+        <p>{{ t('list.empty_body') }}</p>
+        <a class="btn btn-primary" href="/applications/new">{{ t('action.add_application') }}</a>
+      </div>
+    </div>
   {% endif %}
 </main>
 {% endblock %}

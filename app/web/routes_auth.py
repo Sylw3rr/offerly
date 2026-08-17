@@ -1,4 +1,8 @@
-"""Sign-in, sign-up, sign-out and password recovery pages."""
+"""Sign-in, sign-up, sign-out and password recovery pages.
+
+Signing in and redeeming an invite share one template: two panels, one screen,
+so nobody has to hunt for the other link.
+"""
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -6,33 +10,28 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from app.auth import service
 from app.auth.dependencies import clear_session_cookies, set_session_cookies
 from app.config import get_settings
-from app.web.templates import templates
+from app.i18n import template_globals
+from app.web.templates import render
 
 router = APIRouter(tags=["auth"])
-
-# Shown whether or not the address has an account here.
-RESET_SENT = (
-    "If that address has an account, a link to set a new password is on its way. "
-    "It expires in an hour."
-)
 
 
 @router.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
-    return templates.TemplateResponse(request, "login.html", {})
+    return render(request, "auth.html", {})
 
 
 @router.post("/login")
-def login(
-    request: Request,
-    email: str = Form(...),
-    password: str = Form(...),
-):
+def login(request: Request, email: str = Form(...), password: str = Form(...)):
     try:
         session = service.sign_in(email.strip().lower(), password)
     except service.AuthError as exc:
-        return templates.TemplateResponse(
-            request, "login.html", {"error": str(exc), "email": email}, status_code=400
+        t = template_globals(request)["t"]
+        return render(
+            request,
+            "auth.html",
+            {"error": t(str(exc)), "error_on": "login", "email": email},
+            status_code=400,
         )
 
     response = RedirectResponse("/", status_code=303)
@@ -42,7 +41,7 @@ def login(
 
 @router.get("/signup", response_class=HTMLResponse)
 def signup_form(request: Request):
-    return templates.TemplateResponse(request, "signup.html", {})
+    return render(request, "auth.html", {})
 
 
 @router.post("/signup")
@@ -55,10 +54,16 @@ def signup(
     try:
         session = service.sign_up(email.strip().lower(), password, invite_code)
     except service.AuthError as exc:
-        return templates.TemplateResponse(
+        t = template_globals(request)["t"]
+        return render(
             request,
-            "signup.html",
-            {"error": str(exc), "email": email, "invite_code": invite_code},
+            "auth.html",
+            {
+                "error": t(str(exc)),
+                "error_on": "signup",
+                "signup_email": email,
+                "invite_code": invite_code,
+            },
             status_code=400,
         )
 
@@ -76,7 +81,7 @@ def logout():
 
 @router.get("/forgot-password", response_class=HTMLResponse)
 def forgot_password_form(request: Request):
-    return templates.TemplateResponse(request, "forgot_password.html", {})
+    return render(request, "forgot_password.html", {})
 
 
 @router.post("/forgot-password", response_class=HTMLResponse)
@@ -84,7 +89,8 @@ def forgot_password(request: Request, email: str = Form(...)):
     """Always answers the same way, sent or not — see `send_password_reset`."""
     redirect_to = get_settings().app_base_url.rstrip("/") + "/reset-password"
     service.send_password_reset(email.strip().lower(), redirect_to)
-    return templates.TemplateResponse(request, "forgot_password.html", {"sent": RESET_SENT})
+    t = template_globals(request)["t"]
+    return render(request, "forgot_password.html", {"sent": t("auth.reset_sent")})
 
 
 @router.get("/reset-password", response_class=HTMLResponse)
@@ -95,14 +101,7 @@ def reset_password_form(request: Request, token_hash: str = "", type: str = ""):
     server-side. Without one there is nothing to redeem: say so rather than
     showing a password field that cannot work.
     """
-    return templates.TemplateResponse(
-        request,
-        "reset_password.html",
-        {
-            "token_hash": token_hash,
-            "error": None if token_hash else "This link is missing its token.",
-        },
-    )
+    return render(request, "reset_password.html", {"token_hash": token_hash, "error": None})
 
 
 @router.post("/reset-password", response_class=HTMLResponse)
@@ -112,21 +111,23 @@ def reset_password(
     password: str = Form(...),
     password_again: str = Form(""),
 ):
+    t = template_globals(request)["t"]
+
     if password != password_again:
-        return templates.TemplateResponse(
+        return render(
             request,
             "reset_password.html",
-            {"token_hash": token_hash, "error": "The two passwords do not match."},
+            {"token_hash": token_hash, "error": t("auth.error_mismatch")},
             status_code=400,
         )
 
     try:
         session = service.reset_password(token_hash, password)
     except service.AuthError as exc:
-        return templates.TemplateResponse(
+        return render(
             request,
             "reset_password.html",
-            {"token_hash": token_hash, "error": str(exc)},
+            {"token_hash": token_hash, "error": t(str(exc))},
             status_code=400,
         )
 

@@ -59,7 +59,8 @@ These are design decisions, not missing features:
 |---|---|
 | Database, auth, row-level security | Supabase (PostgreSQL) |
 | Backend / API | Python 3.11+, FastAPI |
-| Web UI | HTMX + Jinja2 (no build step) |
+| Web UI | Jinja2, one stylesheet, no build step and no CDN |
+| Interface languages | Polish and English |
 | Email ingest | Cloudflare Email Routing → webhook |
 | Mobile (planned) | Native client on the same REST API |
 
@@ -73,6 +74,10 @@ code cannot leak another user's rows, because the database refuses the query.
 passwords. Each account gets a private forwarding address; you decide with a mail
 filter what reaches it. This removes the single largest liability such a tool can
 carry — and it works with any mail provider, not just Gmail.
+
+**The page fetches nothing from anywhere else.** No fonts, no icon sets, no
+analytics, no CDN. A stylesheet pulled from someone else's server would tell them
+that a job search is happening, and would stop working on a train.
 
 **Your data is yours to take and yours to destroy.** The account page exports every
 application and saved answer as plain CSV, and closes the account for good — the

@@ -18,6 +18,18 @@ class CurrentUser:
     email: str
     access_token: str
 
+    @property
+    def first_name(self) -> str:
+        """Something to greet with until there is a real name to use.
+
+        `patryk.sylwerski@…` becomes Patryk. Not always right, but friendlier
+        than an email address in a headline, and the visitor can see where it
+        came from.
+        """
+        local = self.email.split("@")[0]
+        part = local.replace("_", ".").split(".")[0]
+        return part.capitalize() if part else self.email
+
 
 def set_session_cookies(response: Response, session: Session) -> None:
     settings = get_settings()

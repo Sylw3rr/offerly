@@ -13,7 +13,12 @@ from app.db.client import new_anon_client, service_client
 
 
 class AuthError(Exception):
-    """Sign-up or sign-in was refused."""
+    """Sign-up or sign-in was refused.
+
+    Carries a translation key rather than a sentence: the service layer has no
+    request and therefore no language. The route turns it into words. A key
+    with no entry renders as itself, so a missed one is visible, not blank.
+    """
 
 
 @dataclass(frozen=True)
@@ -28,7 +33,7 @@ def _session_from_supabase(response) -> Session:
     session = getattr(response, "session", None)
     user = getattr(response, "user", None)
     if session is None or user is None:
-        raise AuthError("Invalid email or password.")
+        raise AuthError("auth.error_bad_credentials")
     return Session(
         access_token=session.access_token,
         refresh_token=session.refresh_token,
@@ -43,7 +48,7 @@ def sign_in(email: str, password: str) -> Session:
             {"email": email, "password": password}
         )
     except Exception as exc:  # supabase raises provider-specific errors
-        raise AuthError("Invalid email or password.") from exc
+        raise AuthError("auth.error_bad_credentials") from exc
     return _session_from_supabase(response)
 
 
@@ -55,7 +60,7 @@ def sign_up(email: str, password: str, invite_code: str) -> Session:
     last remaining use cannot both succeed.
     """
     if len(password) < 10:
-        raise AuthError("Password must be at least 10 characters.")
+        raise AuthError("auth.error_short_password")
 
     admin = service_client()
 
@@ -63,12 +68,12 @@ def sign_up(email: str, password: str, invite_code: str) -> Session:
         "redeem_invite", {"p_code": invite_code.strip(), "p_email": email}
     ).execute()
     if not redeemed.data:
-        raise AuthError("This invite code is not valid.")
+        raise AuthError("auth.error_bad_invite")
 
     try:
         admin.auth.admin.create_user({"email": email, "password": password, "email_confirm": True})
     except Exception as exc:
-        raise AuthError("Could not create the account. Is the email already registered?") from exc
+        raise AuthError("auth.error_signup_failed") from exc
 
     return sign_in(email, password)
 
@@ -101,21 +106,21 @@ def reset_password(token_hash: str, new_password: str) -> Session:
     docs/SETUP.md for the email template this expects.
     """
     if len(new_password) < MIN_PASSWORD_LENGTH:
-        raise AuthError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+        raise AuthError("auth.error_short_password")
 
     client = new_anon_client()
     try:
         verified = client.auth.verify_otp({"token_hash": token_hash, "type": "recovery"})
     except Exception as exc:
-        raise AuthError("This link has expired or has already been used.") from exc
+        raise AuthError("auth.error_link_expired") from exc
 
     if getattr(verified, "session", None) is None:
-        raise AuthError("This link has expired or has already been used.")
+        raise AuthError("auth.error_link_expired")
 
     try:
         client.auth.update_user({"password": new_password})
     except Exception as exc:
-        raise AuthError("Could not set that password. Try a different one.") from exc
+        raise AuthError("auth.error_password_refused") from exc
 
     return _session_from_supabase(verified)
 

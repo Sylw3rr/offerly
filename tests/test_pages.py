@@ -7,6 +7,8 @@ feed each page the shape the repositories return, so a rendering mistake fails
 here instead of in the browser.
 """
 
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -72,15 +74,20 @@ def client(monkeypatch):
     monkeypatch.setattr(repo, "open_applications", lambda token: [])
     monkeypatch.setattr(repo, "recent_events", lambda token, limit=8: [])
     monkeypatch.setattr(repo, "list_profile_answers", lambda token: [])
+    monkeypatch.setattr(repo, "all_status_events", lambda token: [])
+    monkeypatch.setattr(repo, "last_moves", lambda token: {})
 
-    yield TestClient(app)
+    # English, so the assertions below read as the strings they check. The
+    # interface defaults to Polish; the cookie is the same one the account
+    # page sets.
+    yield TestClient(app, cookies={"lang": "en"})
     app.dependency_overrides.clear()
 
 
 def test_dashboard_renders_with_nothing_to_chase(client):
     response = client.get("/dashboard")
     assert response.status_code == 200
-    assert "Needs attention" in response.text
+    assert "Today" in response.text
     assert "Nothing to chase" in response.text
     # The ghosting window is stated rather than left as a mystery number.
     assert "21 days" in response.text
@@ -138,7 +145,7 @@ def test_application_detail_renders_both_salary_figures(client):
     assert response.status_code == 200
     assert "Advertised" in response.text
     assert "8 000–12 000 PLN gross/month" in response.text
-    assert "Declared" in response.text
+    assert "You quoted" in response.text
 
 
 def test_missing_salary_figures_render_as_a_dash_not_an_error(client, monkeypatch):
@@ -161,7 +168,7 @@ def test_answers_page_suggests_labels_when_empty(client):
     response = client.get("/answers")
     assert response.status_code == 200
     assert "Notice period" in response.text
-    assert "No answers yet" in response.text
+    assert "Nothing here yet" in response.text
 
 
 def test_answers_page_lists_saved_answers_with_a_copy_button(client, monkeypatch):
@@ -174,7 +181,7 @@ def test_answers_page_lists_saved_answers_with_a_copy_button(client, monkeypatch
     )
     response = client.get("/answers")
     assert "One month" in response.text
-    assert 'data-answer="p1"' in response.text
+    assert 'data-copy="value-p1"' in response.text
 
 
 def test_duplicate_answer_label_is_explained_rather_than_thrown(client, monkeypatch):
@@ -193,6 +200,56 @@ def test_navigation_links_to_every_section(client):
     response = client.get("/dashboard")
     for path in ("/dashboard", "/applications", "/answers", "/account"):
         assert f'href="{path}"' in response.text
+
+
+def test_the_registry_can_be_searched_by_company(client):
+    response = client.get("/applications?q=acme")
+    assert "Support specialist" in response.text
+
+
+def test_a_search_that_matches_nothing_says_so_rather_than_looking_empty(client):
+    response = client.get("/applications?q=zzzz")
+    assert "Nothing matches" in response.text
+    assert "Support specialist" not in response.text
+
+
+def test_search_survives_the_status_filter(client):
+    """The chips keep the query and the search box keeps the status."""
+    response = client.get("/applications?q=acme&status=submitted")
+    assert 'value="acme"' in response.text
+    assert 'name="status" value="submitted"' in response.text
+
+
+def test_the_registry_says_when_each_application_last_moved(client, monkeypatch):
+    monkeypatch.setattr(repo, "last_moves", lambda token: {"a1": "2020-01-01T10:00:00+00:00"})
+    response = client.get("/applications")
+    assert "days ago" in response.text
+
+
+def test_choosing_a_language_sets_the_cookie_the_pages_read(client):
+    response = client.post("/account/preferences", data={"lang": "en"}, follow_redirects=False)
+    assert response.status_code == 303
+    assert "lang=en" in response.headers["set-cookie"]
+
+
+def test_an_unknown_language_is_ignored_rather_than_stored(client):
+    response = client.post("/account/preferences", data={"lang": "xx"}, follow_redirects=False)
+    assert "lang=" not in response.headers.get("set-cookie", "")
+
+
+def test_pages_fetch_nothing_from_anyone_else(client):
+    """The stylesheet, the script and every icon are served from here.
+
+    A page that pulls a font or an icon set off a CDN tells whoever hosts it
+    that a job search is happening, and stops working on a train. Links the
+    user typed themselves are not requests the page makes.
+    """
+    loaders = re.compile(r'(?:src|href)\s*=\s*"(?:https?:)?//([^/"]+)', re.IGNORECASE)
+    for path in ("/dashboard", "/applications", "/applications/new", "/answers", "/account"):
+        body = client.get(path).text
+        outside = {host for host in loaders.findall(body) if host != "testserver"}
+        assert outside == set(), f"{path} reaches out to {outside}"
+        assert "@import" not in body, path
 
 
 # ---------------------------------------------------------------------------

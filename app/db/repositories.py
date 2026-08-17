@@ -329,6 +329,28 @@ def open_applications(token: str) -> list[dict[str, Any]]:
     return result.data or []
 
 
+def all_status_events(token: str) -> list[dict[str, Any]]:
+    """Every transition, for the funnel. Two columns, so it stays cheap."""
+    client = user_client(token)
+    result = client.table("status_events").select("application_id, to_status").execute()
+    return result.data or []
+
+
+def last_moves(token: str) -> dict[str, str]:
+    """When each application last changed status, newest first per application."""
+    client = user_client(token)
+    result = (
+        client.table("status_events")
+        .select("application_id, created_at")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    moves: dict[str, str] = {}
+    for row in result.data or []:
+        moves.setdefault(row["application_id"], row["created_at"])
+    return moves
+
+
 def recent_events(token: str, limit: int = 8) -> list[dict[str, Any]]:
     """The last few status changes, across every application."""
     client = user_client(token)

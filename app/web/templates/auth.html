@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{#
+  Signing in and redeeming an invite share one screen: both are the same
+  question — is there an account here for you — and putting them side by side
+  saves the visitor from hunting for the other link.
+#}
+{% block title %}{{ t('auth.sign_in') }} — Offerly{% endblock %}
+{% block body %}
+<main style="max-width:1160px;padding-top:56px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));align-items:start;gap:26px">
+  <section class="card elev-md" style="padding:32px 30px;gap:18px">
+    <div>
+      <h1 style="font-size:27px">{{ t('auth.welcome_back') }}</h1>
+      <p class="muted" style="margin:6px 0 0;font-size:14px">{{ t('auth.welcome_sub') }}</p>
+    </div>
+
+    {% if error and error_on != 'signup' %}
+      <p style="margin:0;font-size:14px;color:var(--a-300)">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="/login" class="stack" style="gap:16px">
+      <div class="field">
+        <label for="email">{{ t('auth.email') }}</label>
+        <input class="input" id="email" name="email" type="email" value="{{ email or '' }}"
+               autocomplete="email" required autofocus style="min-height:42px">
+      </div>
+      <div class="field">
+        <label for="password">{{ t('auth.password') }}</label>
+        <input class="input" id="password" name="password" type="password"
+               autocomplete="current-password" required style="min-height:42px">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" style="padding:11px">{{ t('auth.enter') }}</button>
+    </form>
+
+    <div class="row" style="justify-content:space-between;font-size:13px">
+      <a href="/forgot-password">{{ t('auth.forgot') }}</a>
+      <span class="muted-2">{{ t('auth.no_mailbox_password') }}</span>
+    </div>
+  </section>
+
+  <section class="card" style="padding:32px 30px;gap:18px">
+    <div>
+      <span class="card-kicker">{{ t('auth.invite_only') }}</span>
+      <h2 style="font-size:24px;margin:4px 0 0">{{ t('auth.have_code') }}</h2>
+      <p class="muted" style="margin:6px 0 0;font-size:14px">{{ t('auth.have_code_sub') }}</p>
+    </div>
+
+    {% if error and error_on == 'signup' %}
+      <p style="margin:0;font-size:14px;color:var(--a-300)">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="/signup" class="stack" style="gap:16px">
+      <div class="field">
+        <label for="invite_code">{{ t('auth.invite_code') }}</label>
+        <input class="input" id="invite_code" name="invite_code" value="{{ invite_code or '' }}" required
+               style="min-height:42px;font-family:ui-monospace,Consolas,monospace;letter-spacing:.08em">
+      </div>
+      <div class="field">
+        <label for="signup_email">{{ t('auth.email') }}</label>
+        <input class="input" id="signup_email" name="email" type="email"
+               value="{{ signup_email or '' }}" autocomplete="email" required style="min-height:42px">
+      </div>
+      <div class="field">
+        <label for="signup_password">
+          {{ t('auth.password') }} <span class="muted-2">({{ t('auth.password_hint') }})</span>
+        </label>
+        {# minlength matches the check in app/auth/service.py — a form that
+           accepts eight and then refuses is worse than no hint at all. #}
+        <input class="input" id="signup_password" name="password" type="password" minlength="10"
+               autocomplete="new-password" required style="min-height:42px">
+      </div>
+      <button class="btn btn-secondary btn-block" type="submit" style="padding:11px">{{ t('auth.create_account') }}</button>
+    </form>
+
+    <p class="muted-2" style="margin:0;font-size:12.5px">{{ t('auth.privacy_note') }}</p>
+  </section>
+</main>
+{% endblock %}

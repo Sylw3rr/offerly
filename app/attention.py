@@ -34,18 +34,36 @@ _PRIORITY = {"missed": 0, "closing": 1, "silent": 2, "blocked": 3}
 
 @dataclass(frozen=True)
 class Item:
-    """One nudge, already phrased for display."""
+    """One nudge: what it is about, and how long the clock has been running.
+
+    The wording is deliberately not built here. This module knows a deadline
+    passed six days ago; it does not know which language the reader wants that
+    in, and a sentence assembled in Python is a sentence no catalogue can
+    translate.
+    """
 
     application_id: str
     company: str
     title: str
     status: str
     kind: str  # missed | closing | silent | blocked
-    message: str
+    days: int | None = None
+    text: str | None = None  # the user's own words, for a blocked application
 
     @property
     def priority(self) -> int:
         return _PRIORITY[self.kind]
+
+    def message(self, t) -> str:
+        """Phrase the nudge using the caller's catalogue."""
+        if self.kind == "blocked":
+            return self.text or t("attention.blocked_default")
+        if self.kind == "closing" and self.days == 0:
+            return t("attention.closing_today")
+
+        count = self.days or 0
+        days = t("days.one") if count == 1 else t("days.many", days=count)
+        return t(f"attention.{self.kind}", days=days)
 
 
 def collect(
@@ -75,14 +93,15 @@ def _candidates(row: dict[str, Any], *, today: date, ghost_after_days: int) -> l
     company = (offer.get("companies") or {}).get("name") or "—"
     status = row.get("status") or ""
 
-    def item(kind: str, message: str) -> Item:
+    def item(kind: str, days: int | None = None, text: str | None = None) -> Item:
         return Item(
             application_id=row["id"],
             company=company,
             title=offer.get("title") or "—",
             status=status,
             kind=kind,
-            message=message,
+            days=days,
+            text=text,
         )
 
     found: list[Item] = []
@@ -92,21 +111,19 @@ def _candidates(row: dict[str, Any], *, today: date, ghost_after_days: int) -> l
         if closes is not None:
             days_left = (closes - today).days
             if days_left < 0:
-                found.append(item("missed", f"Closed {_days(-days_left)} ago, never sent"))
-            elif days_left == 0:
-                found.append(item("closing", "Closes today"))
+                found.append(item("missed", days=-days_left))
             elif days_left <= CLOSING_SOON_DAYS:
-                found.append(item("closing", f"Closes in {_days(days_left)}"))
+                found.append(item("closing", days=days_left))
 
     if status == "blocked":
-        found.append(item("blocked", row.get("blocked_reason") or "Waiting on a manual step"))
+        found.append(item("blocked", text=row.get("blocked_reason")))
 
     if status in WAITING_STATUSES:
         sent = _as_date(row.get("submitted_at"))
         if sent is not None:
             silent_for = (today - sent).days
             if silent_for >= ghost_after_days:
-                found.append(item("silent", f"No answer for {_days(silent_for)}"))
+                found.append(item("silent", days=silent_for))
 
     return found
 
@@ -119,7 +136,3 @@ def _as_date(value: str | None) -> date | None:
         return date.fromisoformat(value[:10])
     except ValueError:
         return None
-
-
-def _days(count: int) -> str:
-    return "1 day" if count == 1 else f"{count} days"

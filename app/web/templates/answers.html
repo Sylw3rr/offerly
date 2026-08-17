@@ -1,98 +1,84 @@
 {% extends "base.html" %}
-{% block title %}Answers — Offerly{% endblock %}
+{% import "_icons.html" as ic %}
+{% block title %}{{ t('nav.answers') }} — Offerly{% endblock %}
 {% block body %}
-<main>
-  <h1>Answers</h1>
-  <p class="hint">
-    The questions every recruitment form asks. Written once, pasted afterwards —
-    so the answer is the same in October as it was in August.
-  </p>
+<main class="mid">
+  <div>
+    <h1>{{ t('nav.answers') }}</h1>
+    <p class="lead">{{ t('answers.sub') }}</p>
+  </div>
 
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  {% if error %}
+    <div class="card accented"><p style="margin:0">{{ error }}</p></div>
+  {% endif %}
 
   {% if answers %}
-    <div class="answers">
+    <div class="stack" style="gap:14px">
       {% for answer in answers %}
-        <article class="answer">
-          <div class="top">
-            <span class="label">{{ answer.label }}</span>
-            <div class="tools">
-              <button type="button" class="copy" data-answer="{{ answer.id }}">Copy</button>
+        <article class="card">
+          <div class="row" style="align-items:baseline">
+            <strong style="font-weight:500;font-size:16px">{{ answer.label }}</strong>
+            <div class="row" style="gap:6px;margin-left:auto">
+              <button class="btn btn-ghost" type="button" data-copy="value-{{ answer.id }}"
+                      data-copy-done="{{ t('toast.copied') }}">{{ ic.icon('copy') }}{{ t('action.copy') }}</button>
               <form method="post" action="/answers/{{ answer.id }}/delete" style="margin:0"
-                    onsubmit="return confirm('Delete “{{ answer.label }}”?')">
-                <button type="submit">Delete</button>
+                    data-confirm-title="{{ t('confirm.delete_answer_title') }}"
+                    data-confirm-body="{{ answer.label }}"
+                    data-confirm-ok="{{ t('confirm.delete_ok') }}"
+                    data-confirm-cancel="{{ t('confirm.keep') }}">
+                <button class="btn btn-ghost" style="color:var(--muted)" type="submit">{{ t('action.delete') }}</button>
               </form>
             </div>
           </div>
-          <p class="value" id="value-{{ answer.id }}">{{ answer.value }}</p>
+          <p id="value-{{ answer.id }}" style="margin:0;font-size:14.5px;white-space:pre-wrap">{{ answer.value }}</p>
 
           <details>
-            <summary>Edit</summary>
-            <form method="post" action="/answers/{{ answer.id }}" class="edit">
-              <label for="label-{{ answer.id }}">Label</label>
-              <input id="label-{{ answer.id }}" name="label" value="{{ answer.label }}" required>
-              <label for="edit-{{ answer.id }}">Answer</label>
-              <textarea id="edit-{{ answer.id }}" name="value" rows="3" required>{{ answer.value }}</textarea>
-              <button type="submit">Save</button>
+            <summary class="muted" style="cursor:pointer;font-size:13px">{{ t('action.edit') }}</summary>
+            <form method="post" action="/answers/{{ answer.id }}" class="stack" style="gap:12px;margin-top:12px">
+              <div class="field">
+                <label for="label-{{ answer.id }}">{{ t('answers.label') }}</label>
+                <input class="input" id="label-{{ answer.id }}" name="label" value="{{ answer.label }}" required>
+              </div>
+              <div class="field">
+                <label for="value-edit-{{ answer.id }}">{{ t('answers.value') }}</label>
+                <textarea class="input" id="value-edit-{{ answer.id }}" name="value" rows="3" required>{{ answer.value }}</textarea>
+              </div>
+              <button class="btn btn-primary" style="justify-self:start" type="submit">{{ t('action.save') }}</button>
             </form>
           </details>
         </article>
       {% endfor %}
     </div>
   {% else %}
-    <p class="empty">No answers yet. Add the ones you retype most often.</p>
+    <div class="card">
+      <div class="empty" style="margin:0">
+        {{ ic.icon('chat-text') }}
+        <strong>{{ t('answers.empty_title') }}</strong>
+        <p>{{ t('answers.empty_body') }}</p>
+      </div>
+    </div>
   {% endif %}
 
-  <section class="panel">
-    <h2>Add an answer</h2>
-    <form method="post" action="/answers">
-      <label for="label">Label</label>
-      <input id="label" name="label" placeholder="Notice period" required>
-      <div class="suggest">
+  <section class="card">
+    <h2>{{ t('answers.add') }}</h2>
+    <form method="post" action="/answers" class="stack" style="gap:14px">
+      <div class="field">
+        <label for="label">{{ t('answers.label') }}</label>
+        <input class="input" id="label" name="label" placeholder="{{ t('answers.label_placeholder') }}" required>
+      </div>
+      <div class="chips">
+        {# Suggestions only fill the field; nothing is saved until Add is pressed. #}
         {% for suggestion in suggestions %}
-          <button type="button" class="fill" data-label="{{ suggestion }}">{{ suggestion }}</button>
+          <button class="chip" type="button" data-fill="label" data-fill-next="value">{{ suggestion }}</button>
         {% endfor %}
       </div>
-      <label for="value">Answer</label>
-      <textarea id="value" name="value" rows="3" required
-                placeholder="One month, ending on the last day of the month."></textarea>
-      <button type="submit">Add</button>
+      <div class="field">
+        <label for="value">{{ t('answers.value') }}</label>
+        <textarea class="input" id="value" name="value" rows="3"
+                  placeholder="{{ t('answers.value_placeholder') }}" required></textarea>
+      </div>
+      <button class="btn btn-primary" style="justify-self:start" type="submit">{{ t('action.save') }}</button>
     </form>
   </section>
 </main>
-
-<script>
-  // Copy buttons. The clipboard API needs a secure context; when it is missing
-  // the text is selected instead so Ctrl+C still works.
-  document.querySelectorAll("button.copy").forEach(function (button) {
-    button.addEventListener("click", function () {
-      var node = document.getElementById("value-" + button.dataset.answer);
-      var done = function () {
-        button.textContent = "Copied";
-        button.classList.add("copied");
-        setTimeout(function () {
-          button.textContent = "Copy";
-          button.classList.remove("copied");
-        }, 1500);
-      };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(node.textContent.trim()).then(done);
-      } else {
-        var range = document.createRange();
-        range.selectNodeContents(node);
-        var selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    });
-  });
-
-  // Suggested labels only fill the field; nothing is saved until Add is pressed.
-  document.querySelectorAll("button.fill").forEach(function (button) {
-    button.addEventListener("click", function () {
-      document.getElementById("label").value = button.dataset.label;
-      document.getElementById("value").focus();
-    });
-  });
-</script>
 {% endblock %}

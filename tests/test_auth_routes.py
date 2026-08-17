@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-client = TestClient(app)
+client = TestClient(app, cookies={"lang": "en"})
 
 
 def test_home_redirects_anonymous_visitor_to_login():

@@ -38,6 +38,28 @@ where schemaname = 'public'
 order by tablename, cmd;
 ```
 
+`invites` is the deliberate exception: row level security on, no policies. No
+policy means no row is visible to `anon` or `authenticated`, which is what a
+table only the service role touches should look like. The dashboard's linter
+reports it as a finding; leave it.
+
+## Verifying privileges
+
+Two defaults have already had to be narrowed here, and both were invisible
+until someone looked. After applying `0004` and `0005`:
+
+```sql
+-- Must both be false: a signed-in user cannot promote their own account.
+select has_column_privilege('authenticated', 'public.profiles', 'plan', 'UPDATE'),
+       has_column_privilege('authenticated', 'public.profiles', 'plan_until', 'UPDATE');
+
+-- Must be false: invite codes cannot be guessed straight through the API.
+select has_function_privilege('anon', 'public.redeem_invite(text, text)', 'EXECUTE');
+```
+
+The dashboard's **Advisors → Security** page catches this class of thing on its
+own and is worth a look after every migration that adds a function or a grant.
+
 ## Design notes
 
 **Every table keys on `user_id`** (`profiles` uses `id`, which is the auth user id).

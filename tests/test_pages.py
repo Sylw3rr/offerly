@@ -65,7 +65,11 @@ def client(monkeypatch):
     """A signed-in client whose data layer is stubbed out."""
     app.dependency_overrides[require_user] = lambda: USER
 
-    monkeypatch.setattr(repo, "get_profile", lambda token: {"ghost_after_days": 21})
+    monkeypatch.setattr(
+        repo,
+        "get_profile",
+        lambda token: {"ghost_after_days": 21, "plan": "free", "plan_until": None},
+    )
     monkeypatch.setattr(repo, "funnel_stats", lambda token: STATS)
     monkeypatch.setattr(repo, "list_applications", lambda token, status=None: [APPLICATION])
     monkeypatch.setattr(repo, "get_application", lambda token, application_id: APPLICATION)
@@ -326,6 +330,71 @@ def test_an_old_application_keeps_the_date_it_was_actually_sent(client, monkeypa
         data={"company_name": "Acme", "title": "Role", "submitted_on": "2026-06-01"},
     )
     assert seen["submitted_at"].startswith("2026-06-01T12:00")
+
+
+# ---------------------------------------------------------------------------
+# Plans
+# ---------------------------------------------------------------------------
+
+
+def test_the_account_page_states_the_plan_and_what_the_other_one_adds(client):
+    response = client.get("/account")
+    assert "Free" in response.text
+    assert "Offers collected from forwarded mail" in response.text
+
+
+def test_the_free_plan_says_there_is_no_checkout_rather_than_showing_a_dead_button(client):
+    response = client.get("/account")
+    assert "no checkout" in response.text
+    assert 'action="/account/upgrade"' not in response.text
+
+
+def test_a_paid_account_is_not_sold_to(client, monkeypatch):
+    monkeypatch.setattr(
+        repo,
+        "get_profile",
+        lambda token: {"ghost_after_days": 21, "plan": "plus", "plan_until": None},
+    )
+    response = client.get("/account")
+    assert "Plus is active" in response.text
+    assert "no checkout" not in response.text
+
+
+def test_the_cv_ceiling_is_stated_before_it_is_met(client):
+    response = client.get("/applications/new")
+    assert "Using 1 of 2 CV versions" in response.text
+
+
+def test_at_the_ceiling_the_form_is_replaced_by_the_reason(client, monkeypatch):
+    monkeypatch.setattr(
+        repo,
+        "list_documents",
+        lambda token: [{"id": "d1", "label": "Support"}, {"id": "d2", "label": "Sales"}],
+    )
+    response = client.get("/applications/new")
+    assert "The free plan keeps 2 CV versions" in response.text
+    assert 'action="/documents/new"' not in response.text
+
+
+def test_a_plus_account_is_never_told_about_a_ceiling(client, monkeypatch):
+    monkeypatch.setattr(
+        repo,
+        "get_profile",
+        lambda token: {"ghost_after_days": 21, "plan": "plus", "plan_until": None},
+    )
+    response = client.get("/applications/new")
+    assert "CV versions on the free plan" not in response.text
+    assert 'action="/documents/new"' in response.text
+
+
+def test_a_refused_cv_version_returns_to_the_form_saying_why(client, monkeypatch):
+    def refuse(token, user_id, label, kind="cv"):
+        raise repo.DocumentLimitReached
+
+    monkeypatch.setattr(repo, "create_document", refuse)
+    response = client.post("/documents/new", data={"label": "Third"}, follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/applications/new?cv_limit=1"
 
 
 # ---------------------------------------------------------------------------

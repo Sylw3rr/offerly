@@ -201,14 +201,29 @@
   </form>
 
   {% if not editing %}
-    <details class="muted" style="font-size:13.5px">
+    <details class="muted" style="font-size:13.5px" {% if cv_limit_hit %}open{% endif %}>
       <summary style="cursor:pointer">{{ t('form.add_cv') }}</summary>
       <p style="margin:10px 0">{{ t('form.add_cv_hint') }}</p>
-      <form method="post" action="/documents/new" class="row" style="gap:8px">
-        <input class="input" name="label" style="flex:1;min-width:220px"
-               placeholder="{{ t('form.add_cv_placeholder') }}" required>
-        <button class="btn btn-secondary" type="submit">{{ ic.icon('plus') }}{{ t('action.save') }}</button>
-      </form>
+
+      {% if cv_full %}
+        {# The ceiling is stated where it is met, with what lifts it — not as a
+           refusal after the fact. #}
+        <p style="margin:10px 0;color:var(--a-300)">
+          {{ t('form.cv_limit_reached', used=documents | length, ceiling=cv_ceiling) }}
+          <a href="/account">{{ t('form.cv_limit_link') }}</a>
+        </p>
+      {% else %}
+        <form method="post" action="/documents/new" class="row" style="gap:8px">
+          <input class="input" name="label" style="flex:1;min-width:220px"
+                 placeholder="{{ t('form.add_cv_placeholder') }}" required>
+          <button class="btn btn-secondary" type="submit">{{ ic.icon('plus') }}{{ t('action.save') }}</button>
+        </form>
+        {% if cv_ceiling %}
+          <p class="field-hint" style="margin-top:8px">
+            {{ t('form.cv_remaining', used=documents | length, ceiling=cv_ceiling) }}
+          </p>
+        {% endif %}
+      {% endif %}
     </details>
   {% endif %}
 </main>

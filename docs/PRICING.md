@@ -69,7 +69,8 @@ it and their word of mouth is the only marketing this has.
 |---|---|
 | **Applications** | Unlimited. Add, edit, delete, change status, full history. |
 | **Offers** | Unlimited, entered by hand — including ones you are still deciding on. |
-| **Companies, CV versions, notes** | Unlimited. |
+| **Companies and notes** | Unlimited. |
+| **CV versions** | Two. Enough to run a search; the third is the moment someone started experimenting, which is the paid question. |
 | **Today's list** | The whole attention engine: deadlines about to pass, offers that closed unsent, silence past your own window, forms left half-done. |
 | **Form answers** | Unlimited, with copy-to-clipboard. |
 | **Headline numbers** | Sent, replied, response rate, and the funnel — how far applications actually got. |
@@ -98,10 +99,11 @@ This is the anchor because it is the promise on the front page and because it
 is the only feature with a real per-user cost: mail routing, parsing,
 storage. Charging for it is honest and it limits itself.
 
-**Free gets a taste, not a trial:** a small monthly allowance of collected
-offers (10 is the number to start with). A job search is bursty — a fourteen-day
-trial expires during a quiet fortnight and teaches nothing. An allowance runs
-out exactly when the tool is proving useful.
+**Free gets a taste, not a trial: ten collected offers a month.** A job search
+is bursty — a fourteen-day trial expires during a quiet fortnight and teaches
+nothing, while an allowance runs out exactly when the tool is proving useful.
+The count resets monthly rather than being a one-off pool, so someone who tries
+it in March and returns in September finds it working rather than spent.
 
 ### 2. Replies matched to applications
 
@@ -194,10 +196,22 @@ way invites are.
 
 ---
 
-## Still open
+## The one place inputs are capped, and why it is not a contradiction
 
-- Whether the free allowance for collected offers is monthly or a one-off pool.
-- Whether CV versions stay unlimited on free. They feed the paid comparison, so
-  there is an argument for capping them at one — and an argument that capping
-  inputs contradicts the rule at the top of this page. Currently unlimited.
-- Whether the invite-only phase ends before or after paid plans exist.
+Two CV versions on free is the single limit on something the user types, which
+sits awkwardly beside the rule at the top of this page. It earns its place
+because a second CV is not more of the same thing — it is the start of an
+experiment, and the experiment is exactly what the paid tier answers. Someone
+tracking one search with one CV never meets this limit. Someone testing four
+versions against the market is doing the thing Offerly is for, and that is the
+thing worth paying for.
+
+It stays at two rather than one so that the free tier can still hold the
+ordinary case: a general CV and a version for one particular kind of role.
+
+## The order things arrive in
+
+Invite-only stays until the product goes to production properly. Plans land
+first, while the door is still shut — a boundary is much easier to get right in
+front of people who already expect the thing to be unfinished, and much harder
+to change once strangers have organised their job search around it.

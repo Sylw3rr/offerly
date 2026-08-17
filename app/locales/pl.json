@@ -118,6 +118,9 @@
   "form.add_cv": "Dodaj wersję CV",
   "form.add_cv_hint": "Wersja to sama etykieta — pliku nie przechowujemy.",
   "form.add_cv_placeholder": "np. Sprzedaż B2B, Helpdesk, Automatyzacje",
+  "form.cv_remaining": "Wykorzystane {used} z {ceiling} wersji CV w planie darmowym.",
+  "form.cv_limit_reached": "Plan darmowy trzyma {ceiling} wersje CV — masz już {used}.",
+  "form.cv_limit_link": "Co daje Plus",
   "form.start_status": "Status na start",
   "form.footnote": "Status zmienisz później — przebieg zapisze każdą zmianę.",
 
@@ -139,6 +142,18 @@
   "suggest.driving_licence": "Prawo jazdy",
   "suggest.english": "Poziom angielskiego",
   "suggest.gdpr": "Klauzula RODO",
+
+  "plan.title": "Plan",
+  "plan.name.free": "Darmowy",
+  "plan.name.plus": "Plus",
+  "plan.free_body": "Prowadzenie rejestru ręcznie jest darmowe i takie zostanie. Plan Plus obejmuje to, co serwer robi za Ciebie, kiedy nie patrzysz.",
+  "plan.free_keeps": "Zawsze za darmo",
+  "plan.free_list": "Nielimitowane zgłoszenia, „na dziś”, odpowiedzi do formularzy, dwie wersje CV, eksport i usunięcie konta.",
+  "plan.plus_adds": "Plus dokłada",
+  "plan.plus_list": "Zbieranie ofert z przekierowanej poczty, dopasowywanie odpowiedzi pracodawców, przypomnienia mailem, statystyki per wersja CV i portal, wersje CV bez limitu.",
+  "plan.plus_active": "Plus jest aktywny. Zebrane oferty, dopasowania i przypomnienia działają.",
+  "plan.until": "Do {date}.",
+  "plan.no_checkout": "Płatności nie ma i nie planujemy — plany nadajemy ręcznie, tak jak zaproszenia. Gdyby kiedyś były: 19–25 zł miesięcznie albo 49 zł za trzy miesiące bez odnawiania.",
 
   "account.signed_in": "Zalogowano jako {email}",
   "account.export_title": "Zabierz swoje dane",

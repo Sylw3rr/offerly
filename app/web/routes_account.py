@@ -11,6 +11,7 @@ import io
 from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from app import plans
 from app.auth import service
 from app.auth.dependencies import CurrentUser, clear_session_cookies, require_user
 from app.config import get_settings
@@ -67,7 +68,18 @@ def _csv_response(filename: str, header: list[str], rows: list[list[object]]) ->
 
 @router.get("/account", response_class=HTMLResponse)
 def account(request: Request, user: CurrentUser = Depends(require_user)):
-    return render(request, "account.html", {"user": user, "error": None})
+    profile = repo.get_profile(user.access_token)
+    return render(
+        request,
+        "account.html",
+        {
+            "user": user,
+            "error": None,
+            "plan": plans.for_profile(profile),
+            "plan_until": profile.get("plan_until"),
+            "is_plus": plans.for_profile(profile).name == plans.PLUS,
+        },
+    )
 
 
 @router.post("/account/preferences")
@@ -151,10 +163,17 @@ def delete_account(
     """
     if confirm_email.strip().lower() != user.email.lower():
         t = template_globals(request)["t"]
+        profile = repo.get_profile(user.access_token)
         return render(
             request,
             "account.html",
-            {"user": user, "error": t("account.error_wrong_email")},
+            {
+                "user": user,
+                "error": t("account.error_wrong_email"),
+                "plan": plans.for_profile(profile),
+                "plan_until": profile.get("plan_until"),
+                "is_plus": plans.for_profile(profile).name == plans.PLUS,
+            },
             status_code=400,
         )
 

@@ -118,6 +118,9 @@
   "form.add_cv": "Add a CV version",
   "form.add_cv_hint": "A version is just a label — we do not store the file.",
   "form.add_cv_placeholder": "e.g. Sales B2B, Helpdesk, Automation",
+  "form.cv_remaining": "Using {used} of {ceiling} CV versions on the free plan.",
+  "form.cv_limit_reached": "The free plan keeps {ceiling} CV versions — you have {used}.",
+  "form.cv_limit_link": "What Plus adds",
   "form.start_status": "Starting status",
   "form.footnote": "Status changes later — the history records every move.",
 
@@ -139,6 +142,18 @@
   "suggest.driving_licence": "Driving licence",
   "suggest.english": "English level",
   "suggest.gdpr": "GDPR clause",
+
+  "plan.title": "Plan",
+  "plan.name.free": "Free",
+  "plan.name.plus": "Plus",
+  "plan.free_body": "Keeping the record by hand is free and stays free. The Plus plan covers what the server does for you while you are not looking.",
+  "plan.free_keeps": "Always free",
+  "plan.free_list": "Unlimited applications, today's list, form answers, two CV versions, export and account deletion.",
+  "plan.plus_adds": "Plus adds",
+  "plan.plus_list": "Offers collected from forwarded mail, employer replies matched to applications, reminders by email, response rates per CV version and per board, unlimited CV versions.",
+  "plan.plus_active": "Plus is active. Collected offers, reply matching and reminders are running.",
+  "plan.until": "Until {date}.",
+  "plan.no_checkout": "There is no checkout and none is planned — plans are granted by hand, the same way invites are. If there ever were one: 19–25 zł a month, or 49 zł for three months with no renewal.",
 
   "account.signed_in": "Signed in as {email}",
   "account.export_title": "Take your data with you",

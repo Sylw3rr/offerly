@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from app import plans
 from app.auth.dependencies import CurrentUser, require_user
 from app.db import repositories as repo
 from app.i18n import template_globals
@@ -235,14 +236,23 @@ def list_applications(
 
 
 @router.get("/applications/new", response_class=HTMLResponse)
-def new_application_form(request: Request, user: CurrentUser = Depends(require_user)):
+def new_application_form(
+    request: Request,
+    cv_limit: bool = False,
+    user: CurrentUser = Depends(require_user),
+):
     t = template_globals(request)["t"]
+    documents = repo.list_documents(user.access_token)
+    plan = plans.for_profile(repo.get_profile(user.access_token))
     return render(
         request,
         "application_form.html",
         {
             "user": user,
-            "documents": repo.list_documents(user.access_token),
+            "documents": documents,
+            "cv_ceiling": plan.limit(plans.CV_VERSIONS),
+            "cv_full": not plan.allows(plans.CV_VERSIONS, len(documents)),
+            "cv_limit_hit": cv_limit,
             "heading": t("form.heading_new"),
             "intro": t("form.intro_new"),
             "action": "/applications/new",
@@ -375,5 +385,8 @@ def create_document(
     label: str = Form(...),
     user: CurrentUser = Depends(require_user),
 ):
-    repo.create_document(user.access_token, user.id, label)
+    try:
+        repo.create_document(user.access_token, user.id, label)
+    except repo.DocumentLimitReached:
+        return RedirectResponse("/applications/new?cv_limit=1", status_code=303)
     return RedirectResponse("/applications/new", status_code=303)

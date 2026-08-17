@@ -12,6 +12,41 @@
     <div class="card accented"><p style="margin:0">{{ error }}</p></div>
   {% endif %}
 
+  {#
+    The plan, stated plainly. No checkout exists, so there is no button that
+    pretends otherwise — a dead "Upgrade" is worse than an honest sentence.
+  #}
+  <section class="card {% if not is_plus %}accented{% endif %}">
+    <div class="row" style="align-items:baseline">
+      <h2>{{ t('plan.title') }}</h2>
+      <span class="tag {{ 'tag-accent' if is_plus else 'tag-neutral' }}" style="margin-left:auto">
+        {{ t('plan.name.' ~ plan.name) }}
+      </span>
+    </div>
+
+    {% if is_plus %}
+      <p class="muted" style="margin:0;font-size:13.5px;max-width:62ch">
+        {{ t('plan.plus_active') }}
+        {%- if plan_until %} {{ t('plan.until', date=plan_until[:10]) }}{% endif %}
+      </p>
+    {% else %}
+      <p class="muted" style="margin:0;font-size:13.5px;max-width:62ch">{{ t('plan.free_body') }}</p>
+
+      <div class="grid-auto">
+        <div class="tile">
+          <span class="tile-label">{{ t('plan.free_keeps') }}</span>
+          <span style="font-size:13.5px">{{ t('plan.free_list') }}</span>
+        </div>
+        <div class="tile accent">
+          <span class="tile-label">{{ t('plan.plus_adds') }}</span>
+          <span style="font-size:13.5px">{{ t('plan.plus_list') }}</span>
+        </div>
+      </div>
+
+      <p class="muted-2" style="margin:0;font-size:12.5px;max-width:62ch">{{ t('plan.no_checkout') }}</p>
+    {% endif %}
+  </section>
+
   <section class="card">
     <h2>{{ t('account.export_title') }}</h2>
     <p class="muted" style="margin:0;font-size:13.5px;max-width:62ch">{{ t('account.export_body') }}</p>

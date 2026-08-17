@@ -50,6 +50,23 @@ delete policy, so the history of an application cannot be rewritten from a clien
 legitimately act across users — scheduled ghosting, inbound email routing. It must
 never reach a browser or a mobile client.
 
+## Granting a plan
+
+There is no checkout. `plus` is set by hand, with the service role — the SQL
+editor in the dashboard runs as that role:
+
+```sql
+update profiles set plan = 'plus', plan_until = null
+ where id = (select id from auth.users where email = 'someone@example.com');
+```
+
+`plan_until` null means it does not lapse; set a timestamp to have it fall back
+to `free` on its own. Nothing is deleted when it does.
+
+The `authenticated` role cannot write either column — `0004_plans.sql` narrows
+its UPDATE grant to `display_name` and `ghost_after_days`, so the public anon
+key cannot promote an account straight through PostgREST.
+
 ## Migrations
 
 | File | Adds |

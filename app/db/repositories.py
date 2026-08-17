@@ -58,13 +58,28 @@ def list_documents(token: str) -> list[dict[str, Any]]:
     return result.data or []
 
 
+class DocumentLimitReached(Exception):
+    """The account is at its plan's ceiling for CV versions."""
+
+
 def create_document(token: str, user_id: str, label: str, kind: str = "cv") -> str:
+    """Add a CV version, unless the plan's ceiling has been reached.
+
+    The database refuses this too — the limit is a trigger, because the client
+    can reach PostgREST directly. Catching it here is about wording, not about
+    enforcement.
+    """
     client = user_client(token)
-    created = (
-        client.table("documents")
-        .insert({"user_id": user_id, "label": label.strip(), "kind": kind})
-        .execute()
-    )
+    try:
+        created = (
+            client.table("documents")
+            .insert({"user_id": user_id, "label": label.strip(), "kind": kind})
+            .execute()
+        )
+    except Exception as exc:
+        if "document_limit_reached" in str(exc):
+            raise DocumentLimitReached from exc
+        raise
     return created.data[0]["id"]
 
 
@@ -304,10 +319,20 @@ DEFAULT_GHOST_AFTER_DAYS = 21
 def get_profile(token: str) -> dict[str, Any]:
     """The signed-in user's settings row, with defaults if it is missing."""
     client = user_client(token)
-    result = client.table("profiles").select("display_name, ghost_after_days").limit(1).execute()
+    result = (
+        client.table("profiles")
+        .select("display_name, ghost_after_days, plan, plan_until")
+        .limit(1)
+        .execute()
+    )
     if result.data:
         return result.data[0]
-    return {"display_name": None, "ghost_after_days": DEFAULT_GHOST_AFTER_DAYS}
+    return {
+        "display_name": None,
+        "ghost_after_days": DEFAULT_GHOST_AFTER_DAYS,
+        "plan": "free",
+        "plan_until": None,
+    }
 
 
 # ---------------------------------------------------------------------------

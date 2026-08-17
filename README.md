@@ -113,6 +113,12 @@ Full setup, including database migrations and the forwarding address, is in
 
 Registration is invite-only during early development.
 
+Tracking by hand is free and stays free — including export and account deletion.
+The work the server does for you (collecting offers from forwarded mail, matching
+replies, sending reminders) sits behind a plan. There is no checkout: plans are
+granted by hand, because the boundary is worth building and the billing plumbing
+is not. Where the line sits and why: [`docs/PRICING.md`](docs/PRICING.md).
+
 ## Architecture notes
 
 Design decisions and their reasoning are documented in

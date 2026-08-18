@@ -130,7 +130,10 @@ is not. Where the line sits and why: [`docs/PRICING.md`](docs/PRICING.md).
 ## Architecture notes
 
 Design decisions and their reasoning are documented in
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Where the product is heading —
+CV generation, assisted applying, and which parts run on a phone rather than a
+desktop — is in [`docs/PRODUCT.md`](docs/PRODUCT.md); where the paid line sits
+is in [`docs/PRICING.md`](docs/PRICING.md).
 
 ## License
 

@@ -227,6 +227,19 @@ textarea.input { min-height: 92px; resize: vertical; }
 .empty strong { font-weight: 500; font-size: 18px; }
 .empty p { margin: 0; font-size: 13.5px; max-width: 46ch; color: var(--muted); }
 
+/* ── the search as a flow ──────────────────────────────── */
+.flow-wrap { overflow-x: auto; }
+.flow { width: 100%; min-width: 660px; height: auto; display: block; }
+.flow-on  { fill: var(--accent); opacity: .34; }
+.flow-off { fill: var(--n-600); opacity: .22; }
+.flow-on:hover, .flow-off:hover { opacity: .55; }
+.flow-node-on  { fill: var(--accent); }
+.flow-node-off { fill: var(--n-600); }
+.flow text { font-size: 11.5px; font-family: var(--font); }
+.flow-label-on  { fill: var(--text); }
+.flow-label-off { fill: color-mix(in srgb, var(--text) 55%, transparent); }
+.flow-value { font-weight: 500; font-variant-numeric: tabular-nums; fill: var(--a-300); }
+
 /* ── overlays: toast, palette, dialog ──────────────────── */
 .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 60;
   animation: rise .18s ease-out; }

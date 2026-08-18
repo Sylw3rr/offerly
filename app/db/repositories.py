@@ -379,6 +379,13 @@ def all_status_events(token: str) -> list[dict[str, Any]]:
     return result.data or []
 
 
+def current_statuses(token: str) -> dict[str, str]:
+    """Where every application sits now, keyed by id."""
+    client = user_client(token)
+    result = client.table("applications").select("id, status").execute()
+    return {row["id"]: row["status"] for row in (result.data or [])}
+
+
 def last_moves(token: str) -> dict[str, str]:
     """When each application last changed status, newest first per application."""
     client = user_client(token)

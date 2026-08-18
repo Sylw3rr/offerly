@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% import "_icons.html" as ic %}
+{% block title %}{{ t('nav.stats') }} — Offerly{% endblock %}
+{% block body %}
+<main>
+  <div class="page-head">
+    <div>
+      <h1>{{ t('nav.stats') }}</h1>
+      <p>{{ t('stats.sub') }}</p>
+    </div>
+    <a class="btn btn-secondary" href="/account/applications.csv">
+      {{ ic.icon('download') }}{{ t('action.export_csv') }}
+    </a>
+  </div>
+
+  <div class="grid-stats">
+    {% for label, value in [
+      ('list.stat.tracked', stats.total),
+      ('list.stat.sent', stats.sent),
+      ('list.stat.replied', stats.responded),
+      ('list.stat.rate', (stats.response_rate ~ '%') if stats.response_rate is not none else t('none'))] %}
+      <div class="card stat">
+        <span class="tile-label">{{ t(label) }}</span>
+        <span class="stat-num">{{ value }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <section class="card">
+    <div class="row" style="align-items:baseline">
+      <h2>{{ t('stats.flow') }}</h2>
+      <span class="muted-2" style="margin-left:auto;font-size:12.5px">{{ t('stats.flow_hint') }}</span>
+    </div>
+
+    {% if chart.empty %}
+      <div class="empty" style="margin:0">
+        {{ ic.icon('note-pencil') }}
+        <strong>{{ t('list.empty_title') }}</strong>
+        <p>{{ t('list.empty_body') }}</p>
+      </div>
+    {% else %}
+      {#
+        Drawn from the status history, so an application that reached an
+        interview and was then rejected still shows as having got there. The
+        ribbons that carry on use the accent; the ones that stop are grey.
+      #}
+      <div class="flow-wrap">
+        <svg class="flow" viewBox="0 0 {{ chart.width }} {{ chart.height }}"
+             role="img" aria-label="{{ t('stats.flow') }}">
+          {% for link in chart.links %}
+            <path d="{{ link.path }}"
+                  class="{{ 'flow-on' if link.carries_on else 'flow-off' }}"></path>
+          {% endfor %}
+
+          {% for node in chart.nodes %}
+            <rect x="{{ node.x }}" y="{{ node.y }}" width="13" height="{{ node.height }}" rx="2"
+                  class="{{ 'flow-node-on' if node.carries_on else 'flow-node-off' }}"></rect>
+            <text x="{{ node.x + 18 }}" y="{{ node.y - 6 }}"
+                  class="{{ 'flow-label-on' if node.carries_on else 'flow-label-off' }}">
+              {{ t(node.label_key) }}
+              <tspan class="flow-value">{{ node.value }}</tspan>
+            </text>
+          {% endfor %}
+        </svg>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="card {% if breakdowns_locked %}accented{% endif %}">
+    <div class="row" style="align-items:baseline">
+      <h2>{{ t('stats.per_cv') }}</h2>
+      {% if breakdowns_locked %}
+        <span class="tag tag-neutral" style="margin-left:auto">{{ t('plan.name.plus') }}</span>
+      {% endif %}
+    </div>
+    <p class="muted" style="margin:0;font-size:13.5px;max-width:66ch">{{ t('stats.per_cv_body') }}</p>
+    {% if breakdowns_locked %}
+      <a class="btn btn-ghost" style="justify-self:start" href="/account">{{ t('form.cv_limit_link') }}</a>
+    {% else %}
+      <p class="muted-2" style="margin:0;font-size:13px">{{ t('stats.per_cv_soon') }}</p>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

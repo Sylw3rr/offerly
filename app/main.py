@@ -16,6 +16,7 @@ from app.web.routes_answers import router as answers_router
 from app.web.routes_applications import router as applications_router
 from app.web.routes_auth import router as auth_router
 from app.web.routes_dashboard import router as dashboard_router
+from app.web.routes_stats import router as stats_router
 
 settings = get_settings()
 
@@ -35,6 +36,7 @@ app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(applications_router)
 app.include_router(answers_router)
+app.include_router(stats_router)
 app.include_router(account_router)
 
 

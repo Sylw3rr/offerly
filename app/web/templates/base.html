@@ -21,6 +21,7 @@
           ('/dashboard', 'squares-four', 'nav.dashboard'),
           ('/applications', 'list-checks', 'nav.applications'),
           ('/answers', 'chat-text', 'nav.answers'),
+          ('/stats', 'chart', 'nav.stats'),
           ('/account', 'user-circle', 'nav.account')] %}
           <a href="{{ path }}" {% if here.startswith(path) %}aria-current="page"{% endif %}>
             {{ ic.icon(name) }}<span>{{ t(key) }}</span>

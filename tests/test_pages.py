@@ -80,6 +80,7 @@ def client(monkeypatch):
     monkeypatch.setattr(repo, "list_profile_answers", lambda token: [])
     monkeypatch.setattr(repo, "all_status_events", lambda token: [])
     monkeypatch.setattr(repo, "last_moves", lambda token: {})
+    monkeypatch.setattr(repo, "current_statuses", lambda token: {})
 
     # English, so the assertions below read as the strings they check. The
     # interface defaults to Polish; the cookie is the same one the account
@@ -373,6 +374,35 @@ def test_an_old_application_keeps_the_date_it_was_actually_sent(client, monkeypa
         data={"company_name": "Acme", "title": "Role", "submitted_on": "2026-06-01"},
     )
     assert seen["submitted_at"].startswith("2026-06-01T12:00")
+
+
+def test_the_statistics_page_draws_the_flow(client, monkeypatch):
+    monkeypatch.setattr(
+        repo,
+        "all_status_events",
+        lambda token: [
+            {"application_id": "a1", "to_status": "submitted"},
+            {"application_id": "a1", "to_status": "replied"},
+            {"application_id": "a2", "to_status": "draft"},
+        ],
+    )
+    monkeypatch.setattr(repo, "current_statuses", lambda token: {"a1": "replied", "a2": "draft"})
+    response = client.get("/stats")
+    assert response.status_code == 200
+    assert "<svg" in response.text
+    assert "Saved" in response.text and "Replied" in response.text
+
+
+def test_an_empty_search_gets_an_explanation_rather_than_an_empty_frame(client):
+    response = client.get("/stats")
+    assert "Nothing here yet" in response.text
+    assert '<svg class="flow"' not in response.text
+
+
+def test_the_breakdown_by_cv_is_behind_the_plan(client):
+    response = client.get("/stats")
+    assert "Replies per CV version" in response.text
+    assert "Plus" in response.text
 
 
 # ---------------------------------------------------------------------------

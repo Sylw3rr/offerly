@@ -342,6 +342,31 @@ def edit_application(
     return RedirectResponse(f"/applications/{application_id}", status_code=303)
 
 
+def _as_link(text: str) -> str | None:
+    """Take a pasted address as it lands on the clipboard.
+
+    Copying a job advert often loses the scheme; refusing "pracuj.pl/praca/..."
+    over a missing https:// would be pedantry at the exact moment someone is
+    trying to be quick.
+    """
+    text = text.strip()
+    if not text:
+        return None
+    if not text.startswith(("http://", "https://")):
+        text = "https://" + text
+    return text
+
+
+@router.post("/applications/{application_id}/link")
+def set_link(
+    application_id: str,
+    url: str = Form(""),
+    user: CurrentUser = Depends(require_user),
+):
+    repo.set_offer_url(user.access_token, application_id, _as_link(url))
+    return RedirectResponse(f"/applications/{application_id}", status_code=303)
+
+
 @router.post("/applications/{application_id}/delete")
 def delete_application(application_id: str, user: CurrentUser = Depends(require_user)):
     repo.delete_application(user.access_token, application_id)

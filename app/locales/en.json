@@ -3,7 +3,6 @@
   "nav.applications": "Applications",
   "nav.answers": "Answers",
   "nav.account": "Account",
-
   "action.search": "Search",
   "action.add_application": "Add application",
   "action.edit": "Edit",
@@ -14,7 +13,6 @@
   "action.copy": "Copy",
   "action.export_csv": "Export CSV",
   "action.sign_out": "Sign out",
-
   "dash.greeting_busy": "Hi {name} — {count} things today",
   "dash.greeting_one": "Hi {name} — one thing today",
   "dash.greeting_calm": "Hi {name} — nothing is chasing you",
@@ -29,7 +27,6 @@
   "dash.empty_body": "Applications with no answer land here after {days} days. Until then the ball is with the employer.",
   "dash.no_activity": "Nothing has happened yet.",
   "dash.no_activity_cta": "Record the first application.",
-
   "days.one": "one day",
   "days.many": "{days} days",
   "attention.missed": "Closed {days} ago, never sent",
@@ -41,7 +38,6 @@
   "attention.action.missed": "Close it out",
   "attention.action.silent": "Follow up",
   "attention.action.blocked": "Finish it",
-
   "list.sub": "Which CV went where, what you quoted, and who answered.",
   "list.search": "Company, role, city…",
   "list.all": "All {count}",
@@ -54,7 +50,6 @@
   "list.no_match_title": "Nothing matches",
   "list.no_match_body": "Try another word, or clear the status filter.",
   "list.clear_search": "Clear",
-
   "col.company": "Company",
   "col.role": "Role",
   "col.cv": "CV",
@@ -62,12 +57,10 @@
   "col.declared": "You quoted",
   "col.status": "Status",
   "col.moved": "Last move",
-
   "moved.today": "today",
   "moved.yesterday": "yesterday",
   "moved.days": "{days} days ago",
   "moved.never": "—",
-
   "detail.back": "All applications",
   "detail.open_offer": "Open offer",
   "detail.money": "Money",
@@ -84,7 +77,6 @@
   "detail.blocked_by": "Waiting on",
   "detail.delete_title": "Delete application",
   "detail.delete_body": "With the offer and its whole history. This cannot be undone.",
-
   "form.heading_new": "Add application",
   "form.intro_new": "Record something you sent — or an offer you are still deciding on.",
   "form.heading_edit": "Edit application",
@@ -123,7 +115,6 @@
   "form.cv_limit_link": "What Plus adds",
   "form.start_status": "Starting status",
   "form.footnote": "Status changes later — the history records every move.",
-
   "answers.sub": "The questions every recruitment form asks. Written once, pasted afterwards — so October's answer matches August's.",
   "answers.add": "Add an answer",
   "answers.label": "For which question",
@@ -134,7 +125,6 @@
   "answers.empty_body": "Add the ones you retype from form to form.",
   "answers.error_empty": "Both a question and an answer are needed.",
   "answers.error_duplicate": "You already have an answer labelled “{label}”.",
-
   "suggest.notice_period": "Notice period",
   "suggest.expected_salary": "Expected salary",
   "suggest.start_date": "Earliest start date",
@@ -142,7 +132,6 @@
   "suggest.driving_licence": "Driving licence",
   "suggest.english": "English level",
   "suggest.gdpr": "GDPR clause",
-
   "plan.title": "Plan",
   "plan.name.free": "Free",
   "plan.name.plus": "Plus",
@@ -154,7 +143,6 @@
   "plan.plus_active": "Plus is active. Collected offers, reply matching and reminders are running.",
   "plan.until": "Until {date}.",
   "plan.no_checkout": "There is no checkout and none is planned — plans are granted by hand, the same way invites are. If there ever were one: 19–25 zł a month, or 49 zł for three months with no renewal.",
-
   "account.signed_in": "Signed in as {email}",
   "account.export_title": "Take your data with you",
   "account.export_body": "Plain CSV, one row per record. Opens in Sheets, Excel and LibreOffice — nothing is locked to Offerly.",
@@ -165,7 +153,6 @@
   "account.type_email": "Type your email to confirm",
   "account.delete_button": "Delete my account",
   "account.error_wrong_email": "That is not the address this account signs in with.",
-
   "auth.sign_in": "Sign in",
   "auth.welcome_back": "Good to see you back",
   "auth.welcome_sub": "See who answered, and what needs a move.",
@@ -200,13 +187,10 @@
   "auth.error_signup_failed": "Could not create the account. Is the email already registered?",
   "auth.error_link_expired": "This link has expired or has already been used.",
   "auth.error_password_refused": "Could not set that password. Try a different one.",
-
   "palette.label": "Quick actions",
   "palette.placeholder": "Type where you want to go…",
   "palette.actions": "Quick actions",
-
   "toast.copied": "Copied to clipboard.",
-
   "confirm.keep": "Keep it",
   "confirm.delete_ok": "Delete for good",
   "confirm.delete_application_title": "Delete for good?",
@@ -214,7 +198,6 @@
   "confirm.delete_answer_title": "Delete this answer?",
   "confirm.delete_account_title": "Delete the account and everything in it?",
   "confirm.delete_account_body": "It happens immediately. CSV export will not be possible afterwards.",
-
   "status.draft": "draft",
   "status.blocked": "blocked",
   "status.submitted": "submitted",
@@ -226,31 +209,26 @@
   "status.ghosted": "no answer",
   "status.withdrawn": "withdrawn",
   "status.blocked_long": "blocked — needs a manual step",
-
   "funnel.saved": "Saved",
   "funnel.sent": "Sent",
   "funnel.acknowledged": "Acknowledged",
   "funnel.replied": "Replied",
   "funnel.interview": "Interview",
   "funnel.offer": "Offer",
-
   "mode.onsite": "on-site",
   "mode.hybrid": "hybrid",
   "mode.remote": "remote",
-
   "level.intern": "intern",
   "level.junior": "junior",
   "level.mid": "mid",
   "level.senior": "senior",
   "level.lead": "lead",
-
   "contract.employment": "employment",
   "contract.b2b": "B2B",
   "contract.mandate": "mandate",
   "contract.task": "task-based",
   "contract.internship": "internship",
   "contract.other": "other",
-
   "source.pracuj_pl": "pracuj.pl",
   "source.linkedin": "LinkedIn",
   "source.olx": "OLX",
@@ -259,17 +237,17 @@
   "source.referral": "referral",
   "source.direct": "direct",
   "source.other": "other",
-
   "source_kind.manual": "manual",
   "source_kind.email_match": "from email",
   "source_kind.system": "system",
-
   "money.gross": "gross",
   "money.net": "net",
   "money.per_month": "month",
   "money.per_hour": "hour",
   "money.from": "from",
   "money.upto": "up to",
-
-  "none": "—"
+  "none": "—",
+  "detail.link": "Advert",
+  "detail.link_add": "Add link",
+  "detail.link_placeholder": "Paste the advert's address"
 }

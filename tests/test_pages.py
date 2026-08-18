@@ -305,6 +305,49 @@ def test_a_range_typed_back_to_front_is_swapped_not_lost(client, monkeypatch):
     assert (seen["salary_min"], seen["salary_max"]) == (8000.0, 12000.0)
 
 
+def test_the_advert_link_is_shown_where_you_would_look_for_it(client):
+    response = client.get("/applications/a1")
+    assert "example.com/offer" in response.text
+    assert "Advert" in response.text
+
+
+def test_without_a_link_the_page_offers_somewhere_to_paste_one(client, monkeypatch):
+    bare = dict(APPLICATION, offers=dict(OFFER, url=None))
+    monkeypatch.setattr(repo, "get_application", lambda token, application_id: bare)
+    response = client.get("/applications/a1")
+    assert 'action="/applications/a1/link"' in response.text
+    assert "Add link" in response.text
+
+
+def test_a_pasted_link_is_saved_without_going_through_the_whole_form(client, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(repo, "set_offer_url", lambda t, i, url: seen.update(id=i, url=url))
+    response = client.post(
+        "/applications/a1/link",
+        data={"url": "https://pracuj.pl/praca/123"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/applications/a1"
+    assert seen == {"id": "a1", "url": "https://pracuj.pl/praca/123"}
+
+
+def test_an_address_pasted_without_a_scheme_still_works(client, monkeypatch):
+    """Copying a job advert often loses the https://; refusing it would be
+    pedantry at the moment someone is trying to be quick."""
+    seen = {}
+    monkeypatch.setattr(repo, "set_offer_url", lambda t, i, url: seen.update(url=url))
+    client.post("/applications/a1/link", data={"url": "pracuj.pl/praca/123"})
+    assert seen["url"] == "https://pracuj.pl/praca/123"
+
+
+def test_an_empty_paste_clears_the_link_rather_than_storing_nothing(client, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(repo, "set_offer_url", lambda t, i, url: seen.update(url=url))
+    client.post("/applications/a1/link", data={"url": "   "})
+    assert seen["url"] is None
+
+
 def test_deleting_an_application_returns_to_the_registry(client, monkeypatch):
     deleted = []
     monkeypatch.setattr(repo, "delete_application", lambda token, i: deleted.append(i))

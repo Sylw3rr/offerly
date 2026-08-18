@@ -3,7 +3,6 @@
   "nav.applications": "Zgłoszenia",
   "nav.answers": "Odpowiedzi",
   "nav.account": "Konto",
-
   "action.search": "Szukaj",
   "action.add_application": "Dodaj zgłoszenie",
   "action.edit": "Edytuj",
@@ -14,7 +13,6 @@
   "action.copy": "Kopiuj",
   "action.export_csv": "Eksport CSV",
   "action.sign_out": "Wyloguj",
-
   "dash.greeting_busy": "Cześć {name} — {count} rzeczy na dziś",
   "dash.greeting_one": "Cześć {name} — jedna rzecz na dziś",
   "dash.greeting_calm": "Cześć {name} — dziś nic nie goni",
@@ -29,7 +27,6 @@
   "dash.empty_body": "Zgłoszenia bez odpowiedzi trafią tu po {days} dniach. Do tego czasu piłka jest po stronie pracodawcy.",
   "dash.no_activity": "Jeszcze nic się nie działo.",
   "dash.no_activity_cta": "Zapisz pierwsze zgłoszenie.",
-
   "days.one": "jeden dzień",
   "days.many": "{days} dni",
   "attention.missed": "Zamknęła się {days} temu, nic nie poszło",
@@ -41,7 +38,6 @@
   "attention.action.missed": "Zamknij temat",
   "attention.action.silent": "Przypomnij się",
   "attention.action.blocked": "Dokończ",
-
   "list.sub": "Z jakim CV poszło, ile podane i kto odpowiedział.",
   "list.search": "Firma, stanowisko, miasto…",
   "list.all": "Wszystkie {count}",
@@ -54,7 +50,6 @@
   "list.no_match_title": "Nic nie pasuje",
   "list.no_match_body": "Poszukaj innego słowa albo wyczyść filtr statusu.",
   "list.clear_search": "Wyczyść",
-
   "col.company": "Firma",
   "col.role": "Stanowisko",
   "col.cv": "CV",
@@ -62,12 +57,10 @@
   "col.declared": "Twoja stawka",
   "col.status": "Status",
   "col.moved": "Ostatni ruch",
-
   "moved.today": "dziś",
   "moved.yesterday": "wczoraj",
   "moved.days": "{days} dni temu",
   "moved.never": "—",
-
   "detail.back": "Wszystkie zgłoszenia",
   "detail.open_offer": "Otwórz ogłoszenie",
   "detail.money": "Pieniądze",
@@ -84,7 +77,6 @@
   "detail.blocked_by": "Czeka na",
   "detail.delete_title": "Usuń zgłoszenie",
   "detail.delete_body": "Razem z ofertą i całą historią. Tego nie da się cofnąć.",
-
   "form.heading_new": "Dodaj zgłoszenie",
   "form.intro_new": "Zapisz to, co poszło — albo ofertę, nad którą się jeszcze zastanawiasz.",
   "form.heading_edit": "Edytuj zgłoszenie",
@@ -123,7 +115,6 @@
   "form.cv_limit_link": "Co daje Plus",
   "form.start_status": "Status na start",
   "form.footnote": "Status zmienisz później — przebieg zapisze każdą zmianę.",
-
   "answers.sub": "Pytania, które wracają w każdym formularzu rekrutacyjnym. Napisz raz, wklejaj potem — żeby odpowiedź w październiku brzmiała tak samo jak w sierpniu.",
   "answers.add": "Dopisz odpowiedź",
   "answers.label": "Na jakie pytanie",
@@ -134,7 +125,6 @@
   "answers.empty_body": "Dopisz te odpowiedzi, które najczęściej przepisujesz z formularza do formularza.",
   "answers.error_empty": "Potrzebne są obie rzeczy: pytanie i odpowiedź.",
   "answers.error_duplicate": "Masz już odpowiedź podpisaną „{label}”.",
-
   "suggest.notice_period": "Okres wypowiedzenia",
   "suggest.expected_salary": "Oczekiwania finansowe",
   "suggest.start_date": "Możliwy termin startu",
@@ -142,7 +132,6 @@
   "suggest.driving_licence": "Prawo jazdy",
   "suggest.english": "Poziom angielskiego",
   "suggest.gdpr": "Klauzula RODO",
-
   "plan.title": "Plan",
   "plan.name.free": "Darmowy",
   "plan.name.plus": "Plus",
@@ -154,7 +143,6 @@
   "plan.plus_active": "Plus jest aktywny. Zebrane oferty, dopasowania i przypomnienia działają.",
   "plan.until": "Do {date}.",
   "plan.no_checkout": "Płatności nie ma i nie planujemy — plany nadajemy ręcznie, tak jak zaproszenia. Gdyby kiedyś były: 19–25 zł miesięcznie albo 49 zł za trzy miesiące bez odnawiania.",
-
   "account.signed_in": "Zalogowano jako {email}",
   "account.export_title": "Zabierz swoje dane",
   "account.export_body": "Zwykły CSV, jeden wiersz na rekord. Otworzy się w Arkuszach, Excelu i LibreOffice — nic tu nie jest zamknięte w Offerly.",
@@ -165,7 +153,6 @@
   "account.type_email": "Wpisz swój e-mail, żeby potwierdzić",
   "account.delete_button": "Usuń konto",
   "account.error_wrong_email": "To nie jest adres, którym logujesz się na to konto.",
-
   "auth.sign_in": "Logowanie",
   "auth.welcome_back": "Dobrze, że wracasz",
   "auth.welcome_sub": "Zobacz, kto odpisał i co czeka na ruch.",
@@ -200,13 +187,10 @@
   "auth.error_signup_failed": "Nie udało się założyć konta. Czy ten adres nie jest już zarejestrowany?",
   "auth.error_link_expired": "Ten link wygasł albo został już użyty.",
   "auth.error_password_refused": "Nie udało się ustawić tego hasła. Spróbuj innego.",
-
   "palette.label": "Szybkie akcje",
   "palette.placeholder": "Wpisz, dokąd chcesz przejść…",
   "palette.actions": "Szybkie akcje",
-
   "toast.copied": "Skopiowane do schowka.",
-
   "confirm.keep": "Zostaw",
   "confirm.delete_ok": "Usuń na zawsze",
   "confirm.delete_application_title": "Usunąć bezpowrotnie?",
@@ -214,7 +198,6 @@
   "confirm.delete_answer_title": "Usunąć tę odpowiedź?",
   "confirm.delete_account_title": "Usunąć konto i wszystko w nim?",
   "confirm.delete_account_body": "Dzieje się od razu. Eksport CSV po tym kroku nie będzie już możliwy.",
-
   "status.draft": "robocze",
   "status.blocked": "zablokowane",
   "status.submitted": "wysłane",
@@ -226,31 +209,26 @@
   "status.ghosted": "bez odpowiedzi",
   "status.withdrawn": "wycofane",
   "status.blocked_long": "zablokowane — czeka na ręczny krok",
-
   "funnel.saved": "Zapisane",
   "funnel.sent": "Wysłane",
   "funnel.acknowledged": "Potwierdzone",
   "funnel.replied": "Odpowiedź",
   "funnel.interview": "Rozmowa",
   "funnel.offer": "Oferta",
-
   "mode.onsite": "z biura",
   "mode.hybrid": "hybrydowo",
   "mode.remote": "zdalnie",
-
   "level.intern": "praktykant",
   "level.junior": "junior",
   "level.mid": "mid",
   "level.senior": "senior",
   "level.lead": "lead",
-
   "contract.employment": "umowa o pracę",
   "contract.b2b": "B2B",
   "contract.mandate": "zlecenie",
   "contract.task": "o dzieło",
   "contract.internship": "staż",
   "contract.other": "inna",
-
   "source.pracuj_pl": "pracuj.pl",
   "source.linkedin": "LinkedIn",
   "source.olx": "OLX",
@@ -259,17 +237,17 @@
   "source.referral": "polecenie",
   "source.direct": "bezpośrednio",
   "source.other": "inne",
-
   "source_kind.manual": "ręcznie",
   "source_kind.email_match": "z maila",
   "source_kind.system": "automat",
-
   "money.gross": "brutto",
   "money.net": "netto",
   "money.per_month": "mies.",
   "money.per_hour": "godz.",
   "money.from": "od",
   "money.upto": "do",
-
-  "none": "—"
+  "none": "—",
+  "detail.link": "Ogłoszenie",
+  "detail.link_add": "Dodaj link",
+  "detail.link_placeholder": "Wklej adres ogłoszenia"
 }

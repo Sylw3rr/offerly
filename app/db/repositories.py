@@ -225,6 +225,24 @@ def update_application(token: str, user_id: str, application_id: str, **fields: 
     ).eq("id", application_id).execute()
 
 
+def set_offer_url(token: str, application_id: str, url: str | None) -> None:
+    """Attach the advertisement to an application, or clear it.
+
+    Its own function rather than a trip through the edit form: the link is the
+    one detail people fill in later, standing at the page wondering where the
+    offer was, and a whole form is too much ceremony for one paste.
+    """
+    client = user_client(token)
+    current = (
+        client.table("applications").select("offer_id").eq("id", application_id).limit(1).execute()
+    )
+    if not current.data:
+        return
+    client.table("offers").update({"url": url or None}).eq(
+        "id", current.data[0]["offer_id"]
+    ).execute()
+
+
 def delete_application(token: str, application_id: str) -> None:
     """Remove an application, its offer and its history.
 

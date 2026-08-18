@@ -107,7 +107,29 @@
             <dt class="muted" style="font-size:12.5px">{{ t('detail.blocked_by') }}</dt>
             <dd style="margin:0">{{ application.blocked_reason }}</dd>
           {% endif %}
+          {% if offer.url %}
+            <dt class="muted" style="font-size:12.5px">{{ t('detail.link') }}</dt>
+            <dd style="margin:0;overflow-wrap:anywhere">
+              <a href="{{ offer.url }}" target="_blank" rel="noopener">
+                {{ offer.url | replace('https://', '') | replace('http://', '') | truncate(48) }}
+              </a>
+            </dd>
+          {% endif %}
         </dl>
+
+        {#
+          Somewhere to paste the advert without going through the whole edit
+          form. This is the field people fill in later, standing on this page
+          wondering where the offer went.
+        #}
+        {% if not offer.url %}
+          <form method="post" action="/applications/{{ application.id }}/link" class="row" style="gap:8px">
+            <input class="input" name="url" style="flex:1;min-width:180px"
+                   placeholder="{{ t('detail.link_placeholder') }}"
+                   aria-label="{{ t('detail.link_add') }}">
+            <button class="btn btn-secondary btn-sm" type="submit">{{ t('detail.link_add') }}</button>
+          </form>
+        {% endif %}
         {% if application.notes %}
           <div class="hr"></div>
           <p class="muted" style="margin:0;font-size:13.5px;white-space:pre-wrap">{{ application.notes }}</p>

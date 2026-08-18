@@ -227,18 +227,36 @@ textarea.input { min-height: 92px; resize: vertical; }
 .empty strong { font-weight: 500; font-size: 18px; }
 .empty p { margin: 0; font-size: 13.5px; max-width: 46ch; color: var(--muted); }
 
-/* ── the search as a flow ──────────────────────────────── */
+/* ── the search as a flow ──────────────────────────────────
+   Four families, not six endings: only a few categorical hues stay apart
+   under colourblind simulation at once. Every band is also named beside it,
+   so nothing here is carried by colour alone. Steps validated against this
+   card's surface (#232532). */
+:root {
+  --f-spine:   #9085e9;  /* still going */
+  --f-silence: #c98500;  /* nobody answered */
+  --f-refused: #d55181;  /* they said no */
+  --f-stopped: #008300;  /* you stopped */
+}
 .flow-wrap { overflow-x: auto; }
-.flow { width: 100%; min-width: 660px; height: auto; display: block; }
-.flow-on  { fill: var(--accent); opacity: .34; }
-.flow-off { fill: var(--n-600); opacity: .22; }
-.flow-on:hover, .flow-off:hover { opacity: .55; }
-.flow-node-on  { fill: var(--accent); }
-.flow-node-off { fill: var(--n-600); }
+.flow { width: 100%; min-width: 680px; height: auto; display: block; }
+.flow-band { opacity: .30; stroke: var(--surface); stroke-width: 1.5; }
+.flow-band:hover { opacity: .52; }
+/* `fill` paints the SVG band, `background` paints the legend swatch; each is
+   inert on the other element, so one rule serves both. */
+.f-spine   { fill: var(--f-spine);   background: var(--f-spine); }
+.f-silence { fill: var(--f-silence); background: var(--f-silence); }
+.f-refused { fill: var(--f-refused); background: var(--f-refused); }
+.f-stopped { fill: var(--f-stopped); background: var(--f-stopped); }
+.flow-node { stroke: var(--surface); stroke-width: 1; }
 .flow text { font-size: 11.5px; font-family: var(--font); }
-.flow-label-on  { fill: var(--text); }
-.flow-label-off { fill: color-mix(in srgb, var(--text) 55%, transparent); }
-.flow-value { font-weight: 500; font-variant-numeric: tabular-nums; fill: var(--a-300); }
+.flow-label { fill: color-mix(in srgb, var(--text) 62%, transparent); }
+.flow-head { fill: var(--text); font-size: 12px; }
+.flow-value { font-weight: 500; font-variant-numeric: tabular-nums; fill: var(--text); }
+.flow-key { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 4px; }
+.flow-key-item { display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--muted); }
+.flow-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
 /* ── overlays: toast, palette, dialog ──────────────────── */
 .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 60;

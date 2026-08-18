@@ -63,3 +63,51 @@ def test_an_empty_history_produces_bars_rather_than_a_crash():
 def test_every_bar_carries_a_fill_so_the_template_never_prints_none():
     for bar in funnel.build(events(("a1", "submitted"))):
         assert bar["fill"].startswith("var(--")
+
+
+# ---------------------------------------------------------------------------
+# The headline numbers
+# ---------------------------------------------------------------------------
+
+
+def test_a_reply_followed_by_a_refusal_still_counts_as_a_reply():
+    """The tiles and the flow chart sat side by side disagreeing about this."""
+    numbers = funnel.headline(
+        events(("a1", "submitted"), ("a1", "replied"), ("a1", "rejected")),
+        {"a1": "rejected"},
+    )
+    assert numbers["sent"] == 1
+    assert numbers["responded"] == 1
+    assert numbers["response_rate"] == 100.0
+
+
+def test_something_withdrawn_before_it_was_sent_was_not_sent():
+    numbers = funnel.headline(events(("a1", "withdrawn")), {"a1": "withdrawn"})
+    assert numbers["sent"] == 0
+    assert numbers["total"] == 1
+
+
+def test_drafts_do_not_drag_the_response_rate_down():
+    numbers = funnel.headline(
+        events(("a1", "submitted"), ("a1", "replied"), ("a2", "draft")),
+        {"a1": "replied", "a2": "draft"},
+    )
+    assert numbers["sent"] == 1
+    assert numbers["response_rate"] == 100.0
+
+
+def test_an_acknowledgement_is_not_a_reply():
+    numbers = funnel.headline(
+        events(("a1", "submitted"), ("a1", "acknowledged")), {"a1": "acknowledged"}
+    )
+    assert numbers["responded"] == 0
+
+
+def test_nothing_sent_leaves_the_rate_unstated_rather_than_zero():
+    numbers = funnel.headline(events(("a1", "draft")), {"a1": "draft"})
+    assert numbers["response_rate"] is None
+
+
+def test_the_counts_by_status_describe_where_things_sit_now():
+    numbers = funnel.headline(events(("a1", "submitted"), ("a1", "rejected")), {"a1": "rejected"})
+    assert numbers["by_status"] == {"rejected": 1}

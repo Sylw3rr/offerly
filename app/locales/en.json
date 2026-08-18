@@ -267,5 +267,9 @@
   "flow.end.rejected": "Rejected",
   "flow.end.withdrawn": "Withdrawn",
   "flow.end.draft": "Draft",
-  "flow.end.blocked": "Blocked"
+  "flow.end.blocked": "Blocked",
+  "flow.family.spine": "Still going",
+  "flow.family.silence": "Silence",
+  "flow.family.refused": "Refused",
+  "flow.family.stopped": "You stopped it"
 }

@@ -121,5 +121,51 @@ def test_the_flow_that_carries_on_is_marked_apart_from_the_flow_that_stops():
         events(("a1", "submitted"), ("a2", "draft")),
         {"a1": "submitted", "a2": "draft"},
     )
-    assert any(link.carries_on for link in chart.links)
-    assert any(not link.carries_on for link in chart.links)
+    assert any(link.family == "spine" for link in chart.links)
+    assert any(link.family != "spine" for link in chart.links)
+
+
+def test_endings_are_coloured_by_family_and_named_by_themselves():
+    """Colour groups the outcome; the label says which one it is."""
+    chart = sankey.build(
+        events(("a1", "draft"), ("a2", "blocked"), ("a3", "submitted"), ("a3", "ghosted")),
+        {"a1": "draft", "a2": "blocked", "a3": "ghosted"},
+    )
+    keys = nodes_by_key(chart)
+    assert keys["saved-draft"].family == keys["saved-blocked"].family == "stopped"
+    assert keys["saved-draft"].label_key != keys["saved-blocked"].label_key
+    assert keys["sent-ghosted"].family == "silence"
+
+
+def test_a_branch_label_sits_level_with_its_own_band():
+    """The complaint that started this: a name floating above a stack does not
+    say which ribbon it belongs to."""
+    chart = sankey.build(events(("a1", "draft")), {"a1": "draft"})
+    branch = nodes_by_key(chart)["saved-draft"]
+    assert branch.label_y == branch.y + branch.height / 2
+
+
+def test_stage_names_sit_above_their_column():
+    chart = sankey.build(events(("a1", "submitted")), {"a1": "submitted"})
+    stage = nodes_by_key(chart)["saved"]
+    assert stage.label_y < stage.y
+
+
+def test_deep_stacks_grow_the_canvas_rather_than_spilling_out_of_it():
+    """Every ending at once: the bands plus the gaps between them must still
+    fit inside the frame."""
+    endings = ["rejected", "ghosted", "withdrawn", "draft", "blocked"]
+    e, statuses = [], {}
+    for ending in endings:
+        for n in range(4):
+            key = f"{ending}{n}"
+            e += events((key, "submitted"), (key, ending))
+            statuses[key] = ending
+    chart = sankey.build(e, statuses)
+    for node in chart.nodes:
+        assert node.y + node.height <= chart.height, node.key
+
+
+def test_the_legend_lists_only_the_families_actually_drawn():
+    chart = sankey.build(events(("a1", "submitted")), {"a1": "submitted"})
+    assert "refused" not in chart.families

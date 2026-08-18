@@ -9,14 +9,9 @@ these values are what it checks against.
 from datetime import UTC, datetime
 from typing import Any
 
+from app import funnel
 from app.attention import RELEVANT_STATUSES
 from app.db.client import user_client
-
-# Statuses that mean the application is finished, one way or another.
-TERMINAL_STATUSES = {"offer", "rejected", "withdrawn"}
-
-# Statuses that count as "the employer engaged".
-RESPONDED_STATUSES = {"replied", "interview", "offer"}
 
 
 def _now() -> str:
@@ -479,27 +474,11 @@ def delete_profile_answer(token: str, answer_id: str) -> None:
 
 
 def funnel_stats(token: str) -> dict[str, Any]:
-    """Counts per status, plus the response rate.
+    """The headline numbers, counted from the status history.
 
-    Response rate deliberately counts only applications that were actually
-    sent — drafts and blocked ones would otherwise depress a number meant to
-    say something about the applications, not the backlog.
+    The arithmetic lives in `app.funnel` so the tiles, the funnel bars and the
+    flow chart cannot drift apart. They did: counting by current status dropped
+    every application that drew a reply and was then refused, which understated
+    the one number this product exists to report.
     """
-    client = user_client(token)
-    result = client.table("applications").select("status, cv_document_id").execute()
-    rows = result.data or []
-
-    by_status: dict[str, int] = {}
-    for row in rows:
-        by_status[row["status"]] = by_status.get(row["status"], 0) + 1
-
-    sent = [r for r in rows if r["status"] not in {"draft", "blocked"}]
-    responded = [r for r in sent if r["status"] in RESPONDED_STATUSES]
-
-    return {
-        "total": len(rows),
-        "sent": len(sent),
-        "responded": len(responded),
-        "response_rate": round(100 * len(responded) / len(sent), 1) if sent else None,
-        "by_status": by_status,
-    }
+    return funnel.headline(all_status_events(token), current_statuses(token))

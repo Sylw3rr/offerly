@@ -68,3 +68,38 @@ def build(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return bars
+
+
+def headline(events: list[dict[str, Any]], statuses: dict[str, str]) -> dict[str, Any]:
+    """The four numbers above the chart, read the same way the chart reads them.
+
+    Counting these by current status is what made the tiles disagree with the
+    flow beside them: an application that drew a reply and was then refused sits
+    in `rejected` today, and dropping it from "answered" understates the one
+    number this product exists to report.
+    """
+    furthest: dict[str, int] = {}
+    for event in events:
+        application_id = event.get("application_id")
+        if not application_id:
+            continue
+        furthest[application_id] = max(
+            furthest.get(application_id, 0), RANK.get(event.get("to_status") or "", 0)
+        )
+    for application_id in statuses:
+        furthest.setdefault(application_id, 0)
+
+    by_status: dict[str, int] = {}
+    for status in statuses.values():
+        by_status[status] = by_status.get(status, 0) + 1
+
+    sent = sum(1 for rank in furthest.values() if rank >= 1)
+    answered = sum(1 for rank in furthest.values() if rank >= 3)
+
+    return {
+        "total": len(furthest),
+        "sent": sent,
+        "responded": answered,
+        "response_rate": round(100 * answered / sent, 1) if sent else None,
+        "by_status": by_status,
+    }

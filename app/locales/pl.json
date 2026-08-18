@@ -267,5 +267,9 @@
   "flow.end.rejected": "Odmowa",
   "flow.end.withdrawn": "Wycofane",
   "flow.end.draft": "Robocze",
-  "flow.end.blocked": "Zablokowane"
+  "flow.end.blocked": "Zablokowane",
+  "flow.family.spine": "Idzie dalej",
+  "flow.family.silence": "Cisza",
+  "flow.family.refused": "Odmowa",
+  "flow.family.stopped": "Zatrzymane przez Ciebie"
 }

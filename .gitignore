@@ -31,3 +31,6 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Real data used while developing. Never committed — this repository is public.
+/private/

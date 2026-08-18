@@ -102,6 +102,14 @@ Open http://127.0.0.1:8000.
 Full setup, including database migrations and the forwarding address, is in
 [`docs/SETUP.md`](docs/SETUP.md).
 
+**Arriving from a spreadsheet?** `scripts/import_applications.py` loads a CSV in
+the same shape the export produces, so a register kept elsewhere comes across in
+one go — and so anything exported can be put back:
+
+```bash
+python scripts/import_applications.py rows.csv --email you@example.com --dry-run
+```
+
 ## Roadmap
 
 | Version | Scope |

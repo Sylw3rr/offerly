@@ -75,6 +75,35 @@ Without SMTP configured, Supabase's shared sender is rate-limited to a few messa
 hour and is fine for trying this out. Any real deployment needs its own SMTP under
 **Authentication → Emails → SMTP Settings**.
 
+## Receiving forwarded mail
+
+Each account gets a private address, `<token>@<INGEST_DOMAIN>`. Nothing reads a
+mailbox — the person sets a filter in their own and decides what reaches it.
+
+1. Point `INGEST_DOMAIN` at a domain (or subdomain) whose mail you control, and
+   set `INGEST_WEBHOOK_SECRET` to a long random string. **Without the secret the
+   endpoint refuses everything**, on purpose: an open endpoint that writes to
+   the database is worse than a missing feature.
+2. In Cloudflare, add the domain and switch on **Email Routing**, then send
+   `*@<INGEST_DOMAIN>` to a Worker that POSTs to `/ingest/email` as JSON:
+
+   ```json
+   { "to": "...", "from": "...", "subject": "...", "text": "...", "message_id": "..." }
+   ```
+
+   The Worker signs the exact body it sends with HMAC-SHA256 and the shared
+   secret, hex-encoded, in `X-Offerly-Signature`.
+3. Find your own address with:
+
+   ```sql
+   select ingest_token from profiles where id = auth.uid();
+   ```
+
+The endpoint answers `202`-style `{"status": "accepted"}` for an address nobody
+owns, exactly as it does for a real one — otherwise it would be a way to test
+which addresses exist. A message that arrives twice is stored once, because
+forwarding rules loop and webhooks retry.
+
 ## Tests and linting
 
 ```bash

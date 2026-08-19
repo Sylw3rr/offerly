@@ -156,3 +156,71 @@ def test_an_unplaceable_message_is_still_kept(client):
 def test_a_board_alert_does_not_move_any_application(client):
     post(client, message(**{"from": "noreply@pracuj.pl", "subject": "Nowe oferty pracy"}))
     assert client.advanced == []
+
+
+# ---------------------------------------------------------------------------
+# Forwarded mail — the ordinary path, since the product asks people to forward
+# ---------------------------------------------------------------------------
+
+
+def test_a_forwarded_board_alert_is_credited_to_the_board(client):
+    """Arrives from the person's own Gmail; the board is inside the text."""
+    post(
+        client,
+        message(
+            **{
+                "from": "patryk@gmail.com",
+                "subject": "Fwd: Oferty na ktore czekasz",
+                "text": (
+                    "---------- Forwarded message ---------\n"
+                    "From: Pracuj.pl <jobalert@wysylka.pracuj.pl>\n"
+                    "Subject: Oferty na ktore czekasz\n\n"
+                    "Nowe oferty pracy dla Ciebie.\n"
+                ),
+                "message_id": "<fwd-1@mail.gmail.com>",
+            }
+        ),
+    )
+    seen, reading, _ = client.stored[-1]
+    assert seen.from_domain == "wysylka.pracuj.pl"
+    assert reading.kind == "offer_alert"
+    assert reading.source == "pracuj_pl"
+
+
+def test_a_forwarded_refusal_still_reaches_the_right_application(client):
+    post(
+        client,
+        message(
+            **{
+                "from": "patryk@gmail.com",
+                "subject": "Fwd: Twoja aplikacja",
+                "text": (
+                    "---------- Przekazana wiadomosc ---------\n"
+                    "Od: Rekrutacja <rekrutacja@acme.pl>\n"
+                    "Temat: Twoja aplikacja\n\n"
+                    "Niestety wybralismy innego kandydata.\n"
+                ),
+                "message_id": "<fwd-2@mail.gmail.com>",
+            }
+        ),
+    )
+    assert client.advanced == [("a1", "rejected")]
+
+
+def test_a_reply_still_has_its_quoted_thread_trimmed(client):
+    """Unwrapping forwards must not stop replies being trimmed: a rejection
+    quoting your own application would otherwise match both ways."""
+    post(
+        client,
+        message(
+            text=(
+                "Niestety wybralismy innego kandydata.\n"
+                "-----Original Message-----\n"
+                "Zapraszamy na rozmowe!\n"
+            ),
+            message_id="<reply-1@acme.pl>",
+        ),
+    )
+    seen, reading, _ = client.stored[-1]
+    assert "Zapraszamy" not in seen.body
+    assert reading.status == "rejected"

@@ -104,4 +104,6 @@ def unpack(raw: str) -> tuple[str, str]:
         if message.get_content_type() == "text/html":
             body = strip_html(body)
 
-    return subject, trim_quoted(tidy(body))
+    # Quotes are trimmed later, by the caller — a forwarded message keeps
+    # everything below the banner, because that is the message.
+    return subject, tidy(body)

@@ -15,7 +15,8 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from app.config import get_settings
 from app.db import ingest_repo
 from app.ingest import matching
-from app.ingest.mime import unpack
+from app.ingest.forwarding import looks_forwarded, unwrap
+from app.ingest.mime import trim_quoted, unpack
 from app.ingest.reading import KIND_REPLY, Message, read
 
 router = APIRouter(tags=["ingest"])
@@ -55,6 +56,11 @@ async def receive(request: Request, x_offerly_signature: str = Header("")):
         parsed_subject, parsed_body = unpack(raw)
         subject, body = parsed_subject or subject, parsed_body or body
 
+    forwarded = looks_forwarded(subject, body)
+    if not forwarded:
+        # Only a reply carries a quoted thread worth dropping.
+        body = trim_quoted(body)
+
     message = Message(
         # The envelope recipient, not the To: header — a catch-all address is
         # reached by messages addressed to somewhere else entirely.
@@ -64,6 +70,11 @@ async def receive(request: Request, x_offerly_signature: str = Header("")):
         body=body,
         message_id=(payload.get("message_id") or "").strip(),
     )
+
+    # A message someone pressed Forward on arrives from them, not from the
+    # board or employer that wrote it; the real sender is inside the text.
+    if forwarded:
+        message = unwrap(message)
 
     owner = ingest_repo.owner_of(message.token)
     if owner is None:

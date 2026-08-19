@@ -31,6 +31,14 @@ def _catalog(lang: str) -> dict[str, str]:
 
 
 def pick_lang(request: Request) -> str:
+    # `?lang=` wins over the stored choice, and is read here rather than only
+    # in the middleware that saves it: the cookie is set on the way out, so a
+    # page relying on it alone would render in the old language and only
+    # switch on the next click.
+    asked = request.query_params.get(LANG_COOKIE)
+    if asked in SUPPORTED:
+        return asked
+
     cookie = request.cookies.get(LANG_COOKIE)
     if cookie in SUPPORTED:
         return cookie

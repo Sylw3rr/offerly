@@ -4,6 +4,7 @@ Entry point. Routers are mounted here as they are built.
 """
 
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -11,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.auth.dependencies import _RedirectToLogin, get_current_user, set_session_cookies
 from app.config import get_settings
+from app.i18n import LANG_COOKIE, SUPPORTED
 from app.web.routes_account import router as account_router
 from app.web.routes_answers import router as answers_router
 from app.web.routes_applications import router as applications_router
@@ -19,6 +21,7 @@ from app.web.routes_dashboard import router as dashboard_router
 from app.web.routes_inbox import router as inbox_router
 from app.web.routes_ingest import router as ingest_router
 from app.web.routes_stats import router as stats_router
+from app.web.templates import render
 
 settings = get_settings()
 
@@ -42,6 +45,27 @@ app.include_router(answers_router)
 app.include_router(stats_router)
 app.include_router(account_router)
 app.include_router(ingest_router)
+
+
+@app.middleware("http")
+async def remember_chosen_language(request: Request, call_next):
+    """`?lang=pl` sets the same cookie the account page does.
+
+    The landing needs a switch before anyone is signed in, and one mechanism
+    for the choice is better than two that can disagree.
+    """
+    response = await call_next(request)
+    chosen = request.query_params.get("lang")
+    if chosen in SUPPORTED and request.cookies.get(LANG_COOKIE) != chosen:
+        response.set_cookie(
+            LANG_COOKIE,
+            chosen,
+            max_age=60 * 60 * 24 * 365,
+            samesite="lax",
+            secure=settings.app_base_url.startswith("https://"),
+            path="/",
+        )
+    return response
 
 
 @app.middleware("http")
@@ -79,6 +103,24 @@ def health() -> dict[str, object]:
 @app.get("/", response_class=HTMLResponse, tags=["web"])
 def home(request: Request):
     user = get_current_user(request)
-    if user is None:
-        return RedirectResponse("/login", status_code=303)
-    return RedirectResponse("/dashboard", status_code=303)
+    if user is not None:
+        # Somebody who already has an account came for the application, not for
+        # the sales pitch.
+        return RedirectResponse("/dashboard", status_code=303)
+
+    return render(
+        request,
+        "landing.html",
+        {
+            "user": None,
+            # A mailto rather than a form: collecting addresses before there is
+            # somewhere safe and rate-limited to put them would be worse than
+            # asking people to write.
+            "contact_link": (
+                "mailto:kontakt@"
+                + (settings.ingest_domain or "offerly.com.pl")
+                + "?subject="
+                + quote("Poprosze o kod do Offerly")
+            ),
+        },
+    )

@@ -7,10 +7,10 @@ from app.main import app
 client = TestClient(app, cookies={"lang": "en"})
 
 
-def test_home_redirects_anonymous_visitor_to_login():
+def test_home_shows_the_landing_to_a_visitor():
     response = client.get("/", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.headers["location"] == "/login"
+    assert response.status_code == 200
+    assert "Offerly" in response.text
 
 
 def test_every_signed_in_page_is_closed_to_anonymous_visitors():
@@ -39,9 +39,12 @@ def test_logout_clears_session_and_redirects():
 
 
 def test_garbage_access_cookie_is_not_treated_as_a_session():
-    """A forged cookie must not grant access — the token is verified, not trusted."""
+    """A forged cookie must not grant access — the token is verified, not trusted.
+
+    Since `/` became the landing, the proof moved to a page that requires one.
+    """
     response = client.get(
-        "/", cookies={"offerly_access": "not-a-real-token"}, follow_redirects=False
+        "/dashboard", cookies={"offerly_access": "not-a-real-token"}, follow_redirects=False
     )
     assert response.status_code == 303
     assert response.headers["location"] == "/login"

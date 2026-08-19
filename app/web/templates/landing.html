@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% import "_icons.html" as ic %}
+{#
+  The public page. It extends base.html for the shell and the stylesheet, but
+  base only draws the application topbar when someone is signed in — so the
+  landing brings its own header, with anchors instead of navigation.
+#}
+{% block title %}Offerly — {{ t('landing.h1') }}{% endblock %}
+{% block body %}
+
+{# Drawn behind everything, never in the way of a click. #}
+<div class="l-bg" data-bg aria-hidden="true">
+  <span class="l-aurora"></span>
+  <span class="l-blob l-blob-1"></span>
+  <span class="l-blob l-blob-2"></span>
+  <span class="l-blob l-blob-3"></span>
+  <span class="l-ring l-ring-1">{{ ic.icon('brand-mark') }}</span>
+  <span class="l-ring l-ring-2">{{ ic.icon('brand-mark') }}</span>
+  <span class="l-dots"></span>
+  <span class="l-fade"></span>
+</div>
+
+<header class="l-top" id="top">
+  <div class="l-top-in">
+    <a class="brand" href="/">
+      <span class="brand-mark">{{ ic.icon('brand-mark') }}</span>Offerly
+    </a>
+    <nav class="l-nav">
+      <a href="#jak">{{ t('landing.nav.how') }}</a>
+      <a href="#funkcje">{{ t('landing.nav.features') }}</a>
+      <a href="#prywatnosc">{{ t('landing.nav.privacy') }}</a>
+      <a href="#cennik">{{ t('landing.nav.pricing') }}</a>
+      <a href="#faq">{{ t('landing.nav.faq') }}</a>
+    </nav>
+    <div class="l-lang">
+      <a href="?lang=pl" class="{% if lang == 'pl' %}on{% endif %}">PL</a>
+      <a href="?lang=en" class="{% if lang == 'en' %}on{% endif %}">EN</a>
+    </div>
+    <a class="l-signin" href="/login">{{ t('landing.sign_in') }}</a>
+    <a class="btn btn-primary" href="#kod" data-magnetic>{{ t('landing.cta') }}</a>
+  </div>
+</header>
+
+<main class="l-main">
+
+  <section class="l-hero">
+    <div>
+      <span class="l-kicker" data-reveal><i class="l-dot"></i>{{ t('landing.kicker') }}</span>
+      <h1 class="l-h1" data-reveal>{{ t('landing.h1') }}</h1>
+      <p class="l-lead" data-reveal>{{ t('landing.lead') }}</p>
+      <div class="l-hero-cta" data-reveal>
+        <a class="btn btn-primary l-cta-big" href="{{ contact_link }}" data-magnetic>{{ t('landing.cta') }}</a>
+      </div>
+      <p class="l-micro" data-reveal>{{ t('landing.micro') }}</p>
+    </div>
+
+    {# Illustrative, and deliberately not from the API: the numbers on a public
+       page should never be somebody's real job search. #}
+    <div class="l-peek" aria-hidden="true">
+      <div class="card elev-lg l-peek-card" data-parallax="0.06">
+        <div class="row" style="align-items:baseline">
+          <h2 style="font-size:19px">{{ t('landing.peek.today') }}</h2>
+          <span class="muted-2" style="margin-left:auto;font-size:12.5px">{{ t('landing.peek.count') }}</span>
+        </div>
+        {% for n, tone in [(1, 'a-400'), (2, 'a-500'), (3, 'a-700')] %}
+          <div class="l-peek-row" style="border-left-color: var(--{{ tone }})">
+            <span>
+              <strong>{{ t('landing.peek.c' ~ n) }}</strong>
+              <span class="muted-2">{{ t('landing.peek.r' ~ n) }}</span>
+            </span>
+            <span class="tag {{ 'tag-accent' if n == 2 else 'tag-neutral' }}">{{ t('landing.peek.s' ~ n) }}</span>
+            <span class="l-peek-why">{{ t('landing.peek.w' ~ n) }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="card l-peek-card" data-parallax="0.02">
+        <h2 style="font-size:17px">{{ t('landing.peek.funnel') }}</h2>
+        {% for label, value, width in [('list.stat.tracked', 24, 100), ('list.stat.sent', 11, 46), ('list.stat.replied', 5, 21)] %}
+          <div class="bar-row">
+            <div class="bar-head"><span class="muted">{{ t(label) }}</span><span class="nums">{{ value }}</span></div>
+            <div class="bar"><span data-bar="{{ width }}"></span></div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="card accented l-peek-card" data-parallax="0.1">
+        <span class="card-kicker">{{ t('landing.peek.inbox') }}</span>
+        <strong style="font-weight:500;font-size:14.5px">{{ t('landing.peek.inbox1') }}</strong>
+        <span class="muted" style="font-size:12.5px">{{ t('landing.peek.inbox2') }}</span>
+        <span class="muted-2" style="font-size:12.5px">{{ t('landing.peek.inbox3') }}</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="l-marquee" aria-hidden="true">
+    <span class="l-marquee-label">{{ t('landing.sources') }}</span>
+    <div class="l-marquee-window">
+      <div class="l-marquee-track">
+        {# Two identical runs, so the -50% slide lands exactly where it started. #}
+        {% for _ in range(2) %}
+          <div class="l-marquee-run">
+            {% for key in ['pracuj_pl', 'linkedin', 'justjoin', 'olx', 'rocketjobs', 'referral', 'direct'] %}
+              <span>{{ t('source.' ~ key) }}</span>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <section class="l-section" id="problem">
+    <span class="l-sec-kicker" data-reveal>{{ t('landing.problem.kicker') }}</span>
+    <h2 class="l-h2" data-reveal>{{ t('landing.problem.h2') }}</h2>
+    <ol class="l-numbered">
+      {% for n in range(1, 6) %}
+        <li data-reveal><span class="l-num">0{{ n }}</span>{{ t('landing.problem.' ~ n) }}</li>
+      {% endfor %}
+    </ol>
+    <p class="l-close" data-reveal>{{ t('landing.problem.close') }}</p>
+  </section>
+
+  <section class="l-section l-split-a" id="jak">
+    <div class="l-sticky">
+      <span class="l-sec-kicker">{{ t('landing.how.kicker') }}</span>
+      <h2 class="l-h2">{{ t('landing.how.h2') }}</h2>
+      <p class="lead">{{ t('landing.how.lead') }}</p>
+      <div class="l-progress">
+        <span class="l-progress-num" data-step-num>01</span>
+        <span class="l-progress-track"><span data-step-fill></span></span>
+        <span class="muted-2">/ 5</span>
+      </div>
+    </div>
+    <div class="l-steps">
+      {% for n in range(1, 6) %}
+        <article class="card l-step" data-step>
+          <span class="l-step-num">0{{ n }}</span>
+          <h3>{{ t('landing.how.t' ~ n) }}</h3>
+          <p class="muted">{{ t('landing.how.d' ~ n) }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="l-section" id="funkcje">
+    <span class="l-sec-kicker" data-reveal>{{ t('landing.features.kicker') }}</span>
+    <h2 class="l-h2" data-reveal>{{ t('landing.features.h2') }}</h2>
+    <p class="lead" data-reveal>{{ t('landing.features.lead') }}</p>
+    <div class="l-cards">
+      {% for n, icon, paid in [(1, 'list-checks', false), (2, 'squares-four', false), (3, 'copy', false),
+                               (4, 'tray', true), (5, 'chat-text', true), (6, 'chart', false)] %}
+        <article class="card l-feature {% if paid %}accented{% endif %}" data-reveal>
+          {{ ic.icon(icon, 'i-lg') }}
+          <h3>{{ t('landing.features.t' ~ n) }}</h3>
+          <p class="muted">{{ t('landing.features.d' ~ n) }}</p>
+          {% if paid %}<span class="l-paid">{{ t('landing.features.paid') }}</span>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="l-section l-split-b" id="statystyki">
+    <div>
+      <span class="l-sec-kicker" data-reveal>{{ t('landing.stats.kicker') }}</span>
+      <h2 class="l-h2" data-reveal>{{ t('landing.stats.h2') }}</h2>
+      <p class="lead" data-reveal>{{ t('landing.stats.lead') }}</p>
+      <p class="l-quote" data-reveal>{{ t('landing.stats.quote') }}</p>
+    </div>
+    <div class="card" data-reveal>
+      <h3 style="font-size:16px">{{ t('landing.stats.card') }}</h3>
+      {% for label, pct, tone in [('Sprzedaż B2B', 34, 'accent'), ('Helpdesk', 21, 'a-600'), ('Ogólne', 9, 'a-700')] %}
+        <div class="bar-row">
+          <div class="bar-head"><span class="muted">{{ label }}</span><span class="nums">{{ pct }}%</span></div>
+          <div class="bar"><span data-bar="{{ pct * 2.6 }}" style="background: var(--{{ tone }})"></span></div>
+        </div>
+      {% endfor %}
+      <div class="hr"></div>
+      <div class="l-stat-row">
+        {# Deliberately a different sample from the hero's funnel: the same two
+           numbers under different labels read as a contradiction. #}
+        <span><b class="nums">41</b>{{ t('list.stat.sent') }}</span>
+        <span><b class="nums">9</b>{{ t('list.stat.replied') }}</span>
+        <span class="l-stat-key"><b class="nums">22%</b>{{ t('list.stat.rate') }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="l-privacy" id="prywatnosc">
+    <div class="l-privacy-in">
+      <span class="l-sec-kicker l-on-dark" data-reveal>{{ t('landing.privacy.kicker') }}</span>
+      <h2 class="l-h2" data-reveal>{{ t('landing.privacy.h2') }}</h2>
+      <div class="l-columns">
+        {% for n in range(1, 5) %}
+          <div data-reveal>
+            <h3>{{ t('landing.privacy.t' ~ n) }}</h3>
+            <p>{{ t('landing.privacy.d' ~ n) }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="l-section" id="cennik">
+    <span class="l-sec-kicker" data-reveal>{{ t('landing.pricing.kicker') }}</span>
+    <h2 class="l-h2" data-reveal>{{ t('landing.pricing.h2') }}</h2>
+    <div class="l-plans">
+      <article class="card l-plan" data-reveal>
+        <div class="row" style="align-items:baseline">
+          <h3>{{ t('landing.pricing.free') }}</h3>
+          <span class="tag tag-neutral" style="margin-left:auto">{{ t('landing.pricing.free_tag') }}</span>
+        </div>
+        <p class="muted">{{ t('landing.pricing.free_lead') }}</p>
+        <ul class="l-plan-list">
+          {% for n in range(1, 6) %}<li><span class="l-mark">—</span>{{ t('landing.pricing.f' ~ n) }}</li>{% endfor %}
+        </ul>
+      </article>
+      <article class="card l-plan accented elev-md" data-reveal>
+        <div class="row" style="align-items:baseline">
+          <h3>{{ t('landing.pricing.plus') }}</h3>
+          <span class="tag tag-accent" style="margin-left:auto">{{ t('landing.pricing.plus_tag') }}</span>
+        </div>
+        <p class="muted">{{ t('landing.pricing.plus_lead') }}</p>
+        <ul class="l-plan-list">
+          {% for n in range(1, 6) %}<li><span class="l-mark l-mark-on">+</span>{{ t('landing.pricing.p' ~ n) }}</li>{% endfor %}
+        </ul>
+      </article>
+    </div>
+    <p class="l-note" data-reveal>{{ t('landing.pricing.note') }}</p>
+  </section>
+
+  <section class="l-section l-split-c">
+    <div>
+      <span class="l-sec-kicker" data-reveal>{{ t('landing.not.kicker') }}</span>
+      <h2 class="l-h2" data-reveal>{{ t('landing.not.h2') }}</h2>
+    </div>
+    <ul class="l-nots">
+      {% for n in range(1, 5) %}
+        <li data-reveal>
+          <span class="l-x">×</span>
+          <span><strong>{{ t('landing.not.' ~ n) }}</strong> <span class="muted">{{ t('landing.not.' ~ n ~ 'd') }}</span></span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="l-section l-split-d" id="faq">
+    <div class="l-sticky">
+      <span class="l-sec-kicker">{{ t('landing.faq.kicker') }}</span>
+      <h2 class="l-h2">{{ t('landing.faq.h2') }}</h2>
+    </div>
+    <div class="l-faq">
+      {% for n in range(1, 6) %}
+        <details data-reveal>
+          <summary>{{ t('landing.faq.q' ~ n) }}</summary>
+          <p class="muted">{{ t('landing.faq.a' ~ n) }}</p>
+        </details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="l-section">
+    <span class="l-sec-kicker" data-reveal>{{ t('landing.road.kicker') }}</span>
+    <h2 class="l-h2" data-reveal>{{ t('landing.road.h2') }}</h2>
+    <ol class="l-road">
+      {% for n, mark in [(1, 'done'), (2, 'now'), (3, ''), (4, '')] %}
+        <li data-reveal class="{% if mark %}l-road-{{ mark }}{% endif %}">
+          <span class="l-road-v">v0.{{ n }}</span>
+          <span>{{ t('landing.road.' ~ n) }}</span>
+          {% if mark %}<span class="tag {{ 'tag-neutral' if mark == 'done' else 'tag-accent' }}">{{ t('landing.road.' ~ mark) }}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="l-section" id="kod">
+    <div class="l-end" data-reveal>
+      <span class="l-end-glow" data-glow aria-hidden="true"></span>
+      <span class="l-sec-kicker">{{ t('landing.end.kicker') }}</span>
+      <h2 class="l-h2">{{ t('landing.end.h2') }}</h2>
+      <p class="lead">{{ t('landing.end.lead') }}</p>
+      <a class="btn btn-primary l-cta-big" href="{{ contact_link }}" data-magnetic>{{ t('landing.end.cta') }}</a>
+      <p class="l-note">{{ t('landing.end.note') }}</p>
+    </div>
+  </section>
+
+  <footer class="l-footer">
+    <div class="hr"></div>
+    <div class="l-footer-in">
+      <span class="brand"><span class="brand-mark">{{ ic.icon('brand-mark') }}</span>Offerly</span>
+      <span class="muted-2">{{ t('landing.footer.tagline') }}</span>
+      <span class="l-footer-links">
+        <a href="https://github.com/Sylw3rr/offerly" target="_blank" rel="noopener">GitHub</a>
+        <a href="#top">{{ t('landing.footer.top') }}</a>
+      </span>
+    </div>
+  </footer>
+</main>
+
+<script src="{{ url_for('static', path='landing.js') }}" defer></script>
+{% endblock %}

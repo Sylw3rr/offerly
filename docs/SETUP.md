@@ -84,16 +84,24 @@ mailbox — the person sets a filter in their own and decides what reaches it.
    set `INGEST_WEBHOOK_SECRET` to a long random string. **Without the secret the
    endpoint refuses everything**, on purpose: an open endpoint that writes to
    the database is worse than a missing feature.
-2. In Cloudflare, add the domain and switch on **Email Routing**, then send
-   `*@<INGEST_DOMAIN>` to a Worker that POSTs to `/ingest/email` as JSON:
+2. Move the domain's nameservers to Cloudflare, then **Email → Email Routing →
+   Enable**. Cloudflare sets the MX records itself.
+3. **Email Workers → Create**, paste [`workers/email-router.js`](../workers/email-router.js),
+   and set two variables on it: `OFFERLY_ENDPOINT` (`https://<host>/ingest/email`)
+   and `OFFERLY_SECRET` (the same string as `INGEST_WEBHOOK_SECRET`).
+4. **Routing rules → Catch-all → Send to a Worker**, and choose it.
 
-   ```json
-   { "to": "...", "from": "...", "subject": "...", "text": "...", "message_id": "..." }
-   ```
+   The Worker forwards the message as it arrived — Python unpacks the MIME,
+   because the standard library has met far more broken mail than anything
+   worth maintaining in JavaScript. It signs the exact body it sends with
+   HMAC-SHA256, hex-encoded, in `X-Offerly-Signature`.
 
-   The Worker signs the exact body it sends with HMAC-SHA256 and the shared
-   secret, hex-encoded, in `X-Offerly-Signature`.
-3. Find your own address with:
+   Keeping a normal address for yourself is a **custom address** rule above the
+   catch-all: `kontakt@` → your own inbox. Rules are matched in order.
+
+   The endpoint also accepts `{"to", "from", "subject", "text"}` without the raw
+   message, which is what the tests use and what a simpler sender can post.
+5. Find your own address with:
 
    ```sql
    select ingest_token from profiles where id = auth.uid();

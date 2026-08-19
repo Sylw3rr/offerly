@@ -15,6 +15,7 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from app.config import get_settings
 from app.db import ingest_repo
 from app.ingest import matching
+from app.ingest.mime import unpack
 from app.ingest.reading import KIND_REPLY, Message, read
 
 router = APIRouter(tags=["ingest"])
@@ -43,11 +44,24 @@ async def receive(request: Request, x_offerly_signature: str = Header("")):
         raise HTTPException(status_code=401, detail="bad signature")
 
     payload = await request.json()
+
+    # The router forwards the message as it arrived and lets Python unpack it:
+    # the standard library has met more badly-formed mail than anything we
+    # would write inside a mail worker. `subject` and `text` remain accepted so
+    # a simpler sender, or a test, can skip the raw form.
+    subject, body = payload.get("subject") or "", payload.get("text") or ""
+    raw = payload.get("raw") or ""
+    if raw:
+        parsed_subject, parsed_body = unpack(raw)
+        subject, body = parsed_subject or subject, parsed_body or body
+
     message = Message(
+        # The envelope recipient, not the To: header — a catch-all address is
+        # reached by messages addressed to somewhere else entirely.
         to_address=(payload.get("to") or "").strip(),
         from_address=(payload.get("from") or "").strip(),
-        subject=payload.get("subject") or "",
-        body=payload.get("text") or "",
+        subject=subject,
+        body=body,
         message_id=(payload.get("message_id") or "").strip(),
     )
 

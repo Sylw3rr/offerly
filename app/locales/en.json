@@ -271,5 +271,22 @@
   "flow.family.spine": "Still going",
   "flow.family.silence": "Silence",
   "flow.family.refused": "Refused",
-  "flow.family.stopped": "You stopped it"
+  "flow.family.stopped": "You stopped it",
+  "nav.inbox": "Inbox",
+  "inbox.sub": "What arrived at your address. The certain things happened on their own — the rest waits for you.",
+  "inbox.my_address": "My address",
+  "inbox.kind.offer_alert": "Board alert",
+  "inbox.kind.employer_reply": "Reply",
+  "inbox.kind.unknown": "Unrecognised",
+  "inbox.no_subject": "(no subject)",
+  "inbox.about": "About:",
+  "inbox.unmatched": "Looks like “{status}”, but there is no telling which application it is about.",
+  "inbox.confirm": "Yes, set “{status}”",
+  "inbox.dismiss": "Set aside",
+  "inbox.done": "Handled",
+  "inbox.empty_title": "Nothing has arrived yet",
+  "inbox.empty_body": "Forward a board alert or an employer's reply to your Offerly address and it will land here.",
+  "account.address_title": "Your forwarding address",
+  "account.address_body": "Set a filter in your own mailbox to forward board alerts and employer replies here. We hold no access to your inbox — you decide what reaches this.",
+  "account.address_note": "The address is yours alone. Treat it like a password: anyone who knows it can put things in your offer inbox."
 }

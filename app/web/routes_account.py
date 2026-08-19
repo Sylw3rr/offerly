@@ -69,12 +69,19 @@ def _csv_response(filename: str, header: list[str], rows: list[list[object]]) ->
 @router.get("/account", response_class=HTMLResponse)
 def account(request: Request, user: CurrentUser = Depends(require_user)):
     profile = repo.get_profile(user.access_token)
+    settings = get_settings()
+    token = profile.get("ingest_token")
     return render(
         request,
         "account.html",
         {
             "user": user,
             "error": None,
+            # Empty until a domain is configured; showing "token@" with nothing
+            # after it would be worse than saying the feature is not set up.
+            "ingest_address": (
+                f"{token}@{settings.ingest_domain}" if token and settings.ingest_domain else None
+            ),
             "plan": plans.for_profile(profile),
             "plan_until": profile.get("plan_until"),
             "is_plus": plans.for_profile(profile).name == plans.PLUS,

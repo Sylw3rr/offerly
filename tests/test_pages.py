@@ -68,7 +68,12 @@ def client(monkeypatch):
     monkeypatch.setattr(
         repo,
         "get_profile",
-        lambda token: {"ghost_after_days": 21, "plan": "free", "plan_until": None},
+        lambda token: {
+            "ghost_after_days": 21,
+            "plan": "free",
+            "plan_until": None,
+            "ingest_token": None,
+        },
     )
     monkeypatch.setattr(repo, "funnel_stats", lambda token: STATS)
     monkeypatch.setattr(repo, "list_applications", lambda token, status=None: [APPLICATION])
@@ -81,6 +86,7 @@ def client(monkeypatch):
     monkeypatch.setattr(repo, "all_status_events", lambda token: [])
     monkeypatch.setattr(repo, "last_moves", lambda token: {})
     monkeypatch.setattr(repo, "current_statuses", lambda token: {})
+    monkeypatch.setattr(repo, "list_inbound", lambda token, limit=60: [])
 
     # English, so the assertions below read as the strings they check. The
     # interface defaults to Polish; the cookie is the same one the account
@@ -203,7 +209,7 @@ def test_duplicate_answer_label_is_explained_rather_than_thrown(client, monkeypa
 
 def test_navigation_links_to_every_section(client):
     response = client.get("/dashboard")
-    for path in ("/dashboard", "/applications", "/answers", "/account"):
+    for path in ("/dashboard", "/applications", "/inbox", "/answers", "/account"):
         assert f'href="{path}"' in response.text
 
 
@@ -426,7 +432,12 @@ def test_a_paid_account_is_not_sold_to(client, monkeypatch):
     monkeypatch.setattr(
         repo,
         "get_profile",
-        lambda token: {"ghost_after_days": 21, "plan": "plus", "plan_until": None},
+        lambda token: {
+            "ghost_after_days": 21,
+            "plan": "plus",
+            "plan_until": None,
+            "ingest_token": None,
+        },
     )
     response = client.get("/account")
     assert "Plus is active" in response.text
@@ -453,7 +464,12 @@ def test_a_plus_account_is_never_told_about_a_ceiling(client, monkeypatch):
     monkeypatch.setattr(
         repo,
         "get_profile",
-        lambda token: {"ghost_after_days": 21, "plan": "plus", "plan_until": None},
+        lambda token: {
+            "ghost_after_days": 21,
+            "plan": "plus",
+            "plan_until": None,
+            "ingest_token": None,
+        },
     )
     response = client.get("/applications/new")
     assert "CV versions on the free plan" not in response.text
@@ -530,3 +546,40 @@ def test_signing_out_happens_with_the_account_deletion(client, monkeypatch):
         "/account/delete", data={"confirm_email": USER.email}, follow_redirects=False
     )
     assert 'offerly_access=""' in response.headers.get("set-cookie", "")
+
+
+def test_the_forwarding_address_is_shown_where_someone_would_look_for_it(client, monkeypatch):
+    """Until now it could only be found by querying the database by hand."""
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "ingest_domain", "offerly.com.pl", raising=False)
+    monkeypatch.setattr(
+        repo,
+        "get_profile",
+        lambda token: {
+            "ghost_after_days": 21,
+            "plan": "free",
+            "plan_until": None,
+            "ingest_token": "fe57abcd",
+        },
+    )
+    response = client.get("/account")
+    assert "fe57abcd@offerly.com.pl" in response.text
+
+
+def test_no_address_is_shown_before_a_domain_is_configured(client, monkeypatch):
+    """ "token@" with nothing after it reads as a bug, not as "not set up yet"."""
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "ingest_domain", "", raising=False)
+    monkeypatch.setattr(
+        repo,
+        "get_profile",
+        lambda token: {
+            "ghost_after_days": 21,
+            "plan": "free",
+            "plan_until": None,
+            "ingest_token": "fe57abcd",
+        },
+    )
+    assert "fe57abcd@" not in client.get("/account").text

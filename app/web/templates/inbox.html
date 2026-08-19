@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% import "_icons.html" as ic %}
+{% block title %}{{ t('nav.inbox') }} — Offerly{% endblock %}
+{% block body %}
+<main class="mid">
+  <div class="page-head">
+    <div>
+      <h1>{{ t('nav.inbox') }}</h1>
+      <p>{{ t('inbox.sub') }}</p>
+    </div>
+    <a class="btn btn-secondary" href="/account">{{ ic.icon('user-circle') }}{{ t('inbox.my_address') }}</a>
+  </div>
+
+  {% if items %}
+    <div class="stack" style="gap:12px">
+      {% for item in items %}
+        <article class="card {% if item.actionable %}accented{% endif %}"
+                 style="gap:10px{% if item.handled_at %};opacity:.62{% endif %}">
+          <div class="row" style="align-items:baseline">
+            <span class="tag {{ 'tag-outline' if item.kind == 'employer_reply' else 'tag-neutral' }}">
+              {{ t('inbox.kind.' ~ item.kind) }}
+            </span>
+            <strong style="font-weight:500;font-size:15px">{{ item.subject or t('inbox.no_subject') }}</strong>
+            <span class="muted-2" style="margin-left:auto;font-size:12.5px">
+              {{ item.received_at[:16] | replace('T', ' ') }}
+            </span>
+          </div>
+
+          <span class="muted" style="font-size:13px">{{ item.from_address }}</span>
+
+          {% if item.company %}
+            {#
+              Only ever a suggestion at this point. Anything certain enough to
+              act on was acted on when it arrived, and appears here already
+              matching its application's status.
+            #}
+            <div class="row" style="gap:8px;font-size:13.5px">
+              <span class="muted">{{ t('inbox.about') }}</span>
+              <a href="/applications/{{ item.application_id }}">{{ item.company }} · {{ item.title }}</a>
+              {% if item.suggestion %}
+                <span class="tag tag-accent">{{ t('status.' ~ item.suggestion) }}</span>
+              {% endif %}
+            </div>
+          {% elif item.suggestion %}
+            <span class="muted" style="font-size:13.5px">
+              {{ t('inbox.unmatched', status=t('status.' ~ item.suggestion)) }}
+            </span>
+          {% endif %}
+
+          {% if item.handled_at %}
+            <span class="muted-2" style="font-size:12.5px">{{ t('inbox.done') }}</span>
+          {% else %}
+            <div class="row" style="gap:8px">
+              {% if item.actionable %}
+                <form method="post" action="/inbox/{{ item.id }}/confirm" style="margin:0">
+                  <button class="btn btn-primary btn-sm" type="submit">
+                    {{ t('inbox.confirm', status=t('status.' ~ item.suggestion)) }}
+                  </button>
+                </form>
+              {% endif %}
+              <form method="post" action="/inbox/{{ item.id }}/dismiss" style="margin:0">
+                <button class="btn btn-ghost" type="submit">{{ t('inbox.dismiss') }}</button>
+              </form>
+            </div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card">
+      <div class="empty" style="margin:0">
+        {{ ic.icon('paper-plane') }}
+        <strong>{{ t('inbox.empty_title') }}</strong>
+        <p>{{ t('inbox.empty_body') }}</p>
+      </div>
+    </div>
+  {% endif %}
+</main>
+{% endblock %}

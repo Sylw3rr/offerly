@@ -47,6 +47,19 @@
     {% endif %}
   </section>
 
+  {% if ingest_address %}
+    <section class="card">
+      <h2>{{ t('account.address_title') }}</h2>
+      <p class="muted" style="margin:0;font-size:13.5px;max-width:62ch">{{ t('account.address_body') }}</p>
+      <div class="row">
+        <code id="ingest-address" class="input" style="flex:1;min-width:240px;padding:9px 11px">{{ ingest_address }}</code>
+        <button class="btn btn-secondary" type="button" data-copy="ingest-address"
+                data-copy-done="{{ t('toast.copied') }}">{{ ic.icon('copy') }}{{ t('action.copy') }}</button>
+      </div>
+      <p class="muted-2" style="margin:0;font-size:12.5px">{{ t('account.address_note') }}</p>
+    </section>
+  {% endif %}
+
   <section class="card">
     <h2>{{ t('account.export_title') }}</h2>
     <p class="muted" style="margin:0;font-size:13.5px;max-width:62ch">{{ t('account.export_body') }}</p>

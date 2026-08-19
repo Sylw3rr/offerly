@@ -334,7 +334,7 @@ def get_profile(token: str) -> dict[str, Any]:
     client = user_client(token)
     result = (
         client.table("profiles")
-        .select("display_name, ghost_after_days, plan, plan_until")
+        .select("display_name, ghost_after_days, plan, plan_until, ingest_token")
         .limit(1)
         .execute()
     )
@@ -345,6 +345,7 @@ def get_profile(token: str) -> dict[str, Any]:
         "ghost_after_days": DEFAULT_GHOST_AFTER_DAYS,
         "plan": "free",
         "plan_until": None,
+        "ingest_token": None,
     }
 
 
@@ -410,6 +411,46 @@ def recent_events(token: str, limit: int = 8) -> list[dict[str, Any]]:
         .execute()
     )
     return result.data or []
+
+
+# ---------------------------------------------------------------------------
+# The inbox — what arrived by mail
+# ---------------------------------------------------------------------------
+
+
+def list_inbound(token: str, limit: int = 60) -> list[dict[str, Any]]:
+    """Arrived mail, newest first, with whatever it was matched to."""
+    client = user_client(token)
+    result = (
+        client.table("inbound_emails")
+        .select(
+            "id, received_at, kind, from_address, from_domain, subject, body,"
+            "handled_at, application_id,"
+            "applications(id, status, offers(title, companies(name)))"
+        )
+        .order("received_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return result.data or []
+
+
+def mark_inbound_handled(token: str, inbound_id: str) -> None:
+    """Put a message aside without acting on it."""
+    client = user_client(token)
+    client.table("inbound_emails").update({"handled_at": _now()}).eq("id", inbound_id).execute()
+
+
+def get_inbound(token: str, inbound_id: str) -> dict[str, Any] | None:
+    client = user_client(token)
+    result = (
+        client.table("inbound_emails")
+        .select("id, from_address, subject, body, application_id, handled_at")
+        .eq("id", inbound_id)
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None
 
 
 # ---------------------------------------------------------------------------

@@ -271,5 +271,22 @@
   "flow.family.spine": "Idzie dalej",
   "flow.family.silence": "Cisza",
   "flow.family.refused": "Odmowa",
-  "flow.family.stopped": "Zatrzymane przez Ciebie"
+  "flow.family.stopped": "Zatrzymane przez Ciebie",
+  "nav.inbox": "Skrzynka",
+  "inbox.sub": "Co przyszło na Twój adres. Pewne rzeczy zadziały się same — reszta czeka na Twoją decyzję.",
+  "inbox.my_address": "Mój adres",
+  "inbox.kind.offer_alert": "Alert z portalu",
+  "inbox.kind.employer_reply": "Odpowiedź",
+  "inbox.kind.unknown": "Nierozpoznane",
+  "inbox.no_subject": "(bez tematu)",
+  "inbox.about": "Dotyczy:",
+  "inbox.unmatched": "Wygląda na „{status}”, ale nie wiadomo, którego zgłoszenia dotyczy.",
+  "inbox.confirm": "Tak, ustaw „{status}”",
+  "inbox.dismiss": "Odłóż",
+  "inbox.done": "Załatwione",
+  "inbox.empty_title": "Nic jeszcze nie przyszło",
+  "inbox.empty_body": "Przekaż alert z portalu albo odpowiedź pracodawcy na swój adres Offerly — wyląduje tutaj.",
+  "account.address_title": "Twój adres do przekierowań",
+  "account.address_body": "Ustaw w swojej poczcie filtr, który przekazuje tu alerty z portali i odpowiedzi pracodawców. Nie mamy dostępu do Twojej skrzynki — sam decydujesz, co tu trafia.",
+  "account.address_note": "Adres jest tylko Twój. Traktuj go jak hasło: kto go zna, może wrzucać rzeczy do Twojej skrzynki ofert."
 }

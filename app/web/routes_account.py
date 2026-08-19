@@ -97,7 +97,7 @@ def save_preferences(lang: str = Form("pl"), user: CurrentUser = Depends(require
             lang,
             max_age=60 * 60 * 24 * 365,
             samesite="lax",
-            secure=get_settings().app_env != "development",
+            secure=get_settings().app_base_url.startswith("https://"),
             path="/",
         )
     return response

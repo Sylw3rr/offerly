@@ -33,7 +33,11 @@ class CurrentUser:
 
 def set_session_cookies(response: Response, session: Session) -> None:
     settings = get_settings()
-    secure = settings.app_env != "development"
+    # Taken from the address rather than from a separate environment flag:
+    # APP_BASE_URL has to be right anyway for password recovery to work, and a
+    # deployment where someone forgot to also set APP_ENV would otherwise send
+    # session cookies without the Secure attribute over a public connection.
+    secure = settings.app_base_url.startswith("https://")
     common = {
         "httponly": True,  # not readable from JavaScript
         "secure": secure,  # HTTPS only outside local development

@@ -100,7 +100,8 @@ uvicorn app.main:app --reload
 Open http://127.0.0.1:8000.
 
 Full setup, including database migrations and the forwarding address, is in
-[`docs/SETUP.md`](docs/SETUP.md).
+[`docs/SETUP.md`](docs/SETUP.md); putting it on the internet is in
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 **Arriving from a spreadsheet?** `scripts/import_applications.py` loads a CSV in
 the same shape the export produces, so a register kept elsewhere comes across in

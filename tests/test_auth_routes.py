@@ -45,3 +45,44 @@ def test_garbage_access_cookie_is_not_treated_as_a_session():
     )
     assert response.status_code == 303
     assert response.headers["location"] == "/login"
+
+
+def test_session_cookies_are_marked_secure_when_the_app_answers_over_https(monkeypatch):
+    """Read off the address rather than a separate flag: a deployment where
+    someone set APP_BASE_URL but forgot APP_ENV would otherwise hand out
+    session cookies without the Secure attribute."""
+    from app.auth import dependencies, service
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "app_base_url", "https://offerly.com.pl", raising=False)
+    monkeypatch.setattr(
+        service,
+        "sign_in",
+        lambda email, password: service.Session(
+            access_token="a", refresh_token="r", user_id="u1", email=email
+        ),
+    )
+    response = TestClient(app).post(
+        "/login", data={"email": "a@b.pl", "password": "x"}, follow_redirects=False
+    )
+    assert "Secure" in response.headers["set-cookie"]
+    assert dependencies.ACCESS_COOKIE in response.headers["set-cookie"]
+
+
+def test_session_cookies_are_not_secure_on_a_local_http_address(monkeypatch):
+    """Otherwise the browser drops them and nobody can sign in locally."""
+    from app.auth import service
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "app_base_url", "http://127.0.0.1:8000", raising=False)
+    monkeypatch.setattr(
+        service,
+        "sign_in",
+        lambda email, password: service.Session(
+            access_token="a", refresh_token="r", user_id="u1", email=email
+        ),
+    )
+    response = TestClient(app).post(
+        "/login", data={"email": "a@b.pl", "password": "x"}, follow_redirects=False
+    )
+    assert "Secure" not in response.headers["set-cookie"]

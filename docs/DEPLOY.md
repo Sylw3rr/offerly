@@ -81,6 +81,62 @@ URL it builds — the stylesheet included — then comes out as `http://` on an
 `https://` page, where the browser refuses to load it. The site appears
 completely unstyled and nothing in the logs looks wrong.
 
+## DNS
+
+The zone lives on Cloudflare. Records arrive in three waves, and most of them
+are not typed by hand.
+
+### Receiving mail — added automatically
+
+Enabling **Email Routing** writes these itself. Do not add or edit them:
+
+| Type | Name | Content |
+|---|---|---|
+| MX | `@` | `route1.mx.cloudflare.net` (and route2, route3, with their priorities) |
+| TXT | `@` | `v=spf1 include:_spf.mx.cloudflare.net ~all` |
+
+### The application — after the first deploy
+
+The platform tells you the target; these are the only two records typed by hand.
+
+| Type | Name | Content | Proxy |
+|---|---|---|---|
+| CNAME | `@` | the platform's hostname, e.g. `offerly-production.up.railway.app` | Proxied |
+| CNAME | `www` | the same hostname | Proxied |
+
+A CNAME at the apex is normally illegal; Cloudflare flattens it, which is one of
+the few good reasons to keep DNS here.
+
+**Set SSL/TLS → Overview → Full (strict).** On *Flexible*, Cloudflare speaks
+HTTPS to the browser and plain HTTP to the origin; the application sees an
+insecure request, redirects to HTTPS, and the two bounce off each other until
+the browser gives up with a redirect loop. It is also, despite the padlock, not
+encrypted end to end.
+
+### Sending mail — when reminders arrive
+
+Send from a **subdomain**, not the apex:
+
+| Type | Name | Content |
+|---|---|---|
+| MX / TXT / CNAME | `send` and `_domainkey` under it | whatever the sending provider gives you |
+
+The reason is SPF. A domain may carry exactly one SPF record, and Email Routing
+already owns the one at the apex. Adding a second — or editing theirs to include
+a sender — is how domains quietly start failing SPF and landing in spam.
+Keeping receiving on `offerly.com.pl` and sending on `send.offerly.com.pl` means
+neither setup can break the other.
+
+### Worth having early
+
+| Type | Name | Content |
+|---|---|---|
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:you@example.com` |
+
+`p=none` asks for reports without acting on them. Once the reports show only
+your own senders, tighten it to `quarantine` and then `reject` — which is what
+stops anyone sending mail that claims to be from this domain.
+
 ## Migrations
 
 The container does not run them. They are applied deliberately, in order, from

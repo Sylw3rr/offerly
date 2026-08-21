@@ -129,3 +129,46 @@ def test_the_page_still_fetches_nothing_from_anyone_else(client):
         if host != "testserver"
     }
     assert hosts <= {"github.com"}, hosts
+
+
+# ── the social avatar ────────────────────────────────────────────────
+
+BRAND = pathlib.Path(__file__).parent.parent / "brand"
+
+
+def test_the_avatar_is_square_and_large_enough_to_upload():
+    from PIL import Image
+
+    with Image.open(BRAND / "offerly-avatar-1080.png") as image:
+        assert image.size == (1080, 1080)
+
+
+def test_the_avatar_is_opaque_to_the_corners():
+    """It is cropped to a circle by the platform. A transparent corner is a
+    corner the crop cannot land on cleanly."""
+    from PIL import Image
+
+    with Image.open(BRAND / "offerly-avatar-1080.png") as image:
+        assert image.convert("RGBA").getchannel("A").getextrema() == (255, 255)
+
+
+def test_the_avatar_survives_a_circular_crop():
+    """Everything that matters has to sit inside the inscribed circle, because
+    that is all Instagram keeps."""
+    from PIL import Image
+
+    with Image.open(BRAND / "offerly-avatar-1080.png") as image:
+        pixels = image.convert("RGBA")
+        width, _ = pixels.size
+        mark = [
+            (x, y)
+            for x in range(0, width, 6)
+            for y in range(0, width, 6)
+            if pixels.getpixel((x, y))[:3] != (22, 24, 38)
+        ]
+
+    assert mark, "the mark is missing entirely"
+    centre = width / 2
+    furthest = max(((x - centre) ** 2 + (y - centre) ** 2) ** 0.5 for x, y in mark)
+    # The inscribed circle has radius width/2; nothing may reach it.
+    assert furthest < centre * 0.95, f"the mark reaches {furthest / centre:.0%} of the crop radius"

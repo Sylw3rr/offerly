@@ -25,7 +25,10 @@ import pathlib
 
 from PIL import Image, ImageDraw
 
-STATIC = pathlib.Path(__file__).resolve().parent.parent / "app" / "web" / "static"
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+STATIC = ROOT / "app" / "web" / "static"
+# Artwork for places outside the product: social profiles, a press kit.
+BRAND = ROOT / "brand"
 
 BG = (22, 24, 38, 255)  # --bg   #161826
 MARK = (181, 171, 252, 255)  # --a-400 #b5abfc, the accent brightened to hold at 16px
@@ -134,8 +137,39 @@ def main() -> None:
     # well inside it.
     draw_icon(512, mark_fraction=0.52, radius_fraction=0).save(STATIC / "icon-512-maskable.png")
 
+    make_social()
+
     for path in sorted(STATIC.glob("*icon*")) + [STATIC / "favicon.ico"]:
         print(f"  {path.name:26} {path.stat().st_size:>7,} bytes")
+    for path in sorted(BRAND.glob("*.png")):
+        print(f"  brand/{path.name:20} {path.stat().st_size:>7,} bytes")
+
+
+def make_social() -> None:
+    """The avatar for a social profile.
+
+    Instagram shows it as a circle, so the tile has no corners of its own: a
+    rounded square inside a circular crop loses its corners anyway and leaves
+    notches where the two curves disagree. Full bleed means the crop lands
+    entirely on the background whatever shape it turns out to be — Instagram in
+    a circle, LinkedIn in a rounded square, an open-graph card as-is.
+
+    The mark is sized against the inscribed circle rather than the square,
+    because the square's corners are exactly the part that gets thrown away.
+    It fills about seven tenths of that circle: an avatar is read at 32px in a
+    comment thread far more often than at 320px on a profile, and at 32px a
+    polite margin is just the mark being small.
+
+    1080 because it is the largest size worth uploading: Instagram resamples
+    down to 320 on the web and 110 on a phone, and giving it more to work from
+    costs nothing. The ring's light side is about 33px here, so it survives
+    that journey without the size floor having to step in.
+    """
+    BRAND.mkdir(parents=True, exist_ok=True)
+    for size in (1080, 320):
+        draw_icon(size, mark_fraction=0.72, radius_fraction=0).save(
+            BRAND / f"offerly-avatar-{size}.png"
+        )
 
 
 if __name__ == "__main__":

@@ -199,3 +199,22 @@ def test_a_missing_asset_does_not_raise(tmp_path, monkeypatch):
     monkeypatch.setattr(assets, "STATIC_DIR", tmp_path)
     assets.digest.cache_clear()
     assert assets.digest("nope.css") == ""
+
+
+def test_every_privacy_point_in_the_catalogue_reaches_the_page(fresh):
+    """The section renders a fixed range, so a point added to the catalogue and
+    not to the loop is written, translated, reviewed — and invisible."""
+    import json
+    import pathlib
+
+    catalogue = json.loads(
+        (pathlib.Path(__file__).parent.parent / "app" / "locales" / "pl.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    html = fresh.get("/").text
+    titles = [v for k, v in catalogue.items() if k.startswith("landing.privacy.t")]
+
+    assert len(titles) >= 5
+    for title in titles:
+        assert title in html, title

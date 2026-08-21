@@ -319,7 +319,28 @@ textarea.input { min-height: 92px; resize: vertical; }
    typeface, nothing fetched. Prefixed `l-` so nothing here can reach into
    the application's own screens. */
 
-.l-main { max-width: var(--wrap); margin: 0 auto; padding: 0 24px 0; display: block; }
+/* A full-bleed grid rather than a centred box: the privacy band was written
+   to span the window — it has its own inner wrapper with the page measure on
+   it — but sitting inside a max-width parent clipped it to the column and
+   turned it into a slab with hard corners hanging in the middle of the page.
+
+   The gutters are grid tracks, so nothing here uses `100vw`; that would be
+   the window *including* the scrollbar and would put a horizontal scroll on
+   every page that has one. */
+.l-main {
+  /* `.l-main` is a <main>, so the shared `main` rule above still applies its
+     measure, padding and gap. Each has to be turned off by name or the grid
+     below is laid out inside a 1160px box and the band never reaches the
+     window. */
+  max-width: none; padding: 0; gap: 0;
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(24px, 1fr)
+    [page-start] minmax(0, var(--wrap)) [page-end]
+    minmax(24px, 1fr) [full-end];
+}
+.l-main > * { grid-column: page; }
+.l-main > .l-privacy { grid-column: full; }
 .l-section { padding-top: clamp(72px, 10vw, 132px); }
 .l-h1 { font-weight: 500; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.04;
   letter-spacing: -.025em; text-wrap: pretty; margin: 18px 0 0; }
@@ -337,11 +358,22 @@ textarea.input { min-height: 92px; resize: vertical; }
 .l-main [id], #top { scroll-margin-top: 92px; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 
-.l-top { position: sticky; top: 0; z-index: 30;
-  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); }
-.l-top::after { content: ""; display: block; height: 1px;
-  background: linear-gradient(to right, transparent, var(--divider) 48px,
-    var(--divider) calc(100% - 48px), transparent); }
+/* The frost sits on a pseudo-element, not on the bar itself.
+
+   `backdrop-filter` clips hard to its own box, so a translucent bar over the
+   moving backdrop reads as a full-width rectangle with a visible bottom edge —
+   worst at the foot of the page, where the aurora is brightest and the blur
+   drags that brightness up into the bar. Masking the bar directly would fade
+   the navigation out with it; masking a layer behind the text fades only the
+   frost. */
+.l-top { position: sticky; top: 0; z-index: 30; }
+.l-top::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  -webkit-mask-image: linear-gradient(180deg, #000 66%, transparent);
+  mask-image: linear-gradient(180deg, #000 66%, transparent);
+}
 .l-top-in { max-width: var(--wrap); margin: 0 auto; padding: 14px 24px;
   display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .l-nav { display: flex; gap: 22px; margin-right: auto; }
@@ -443,7 +475,11 @@ textarea.input { min-height: 92px; resize: vertical; }
   padding-block: clamp(56px, 7vw, 88px); }
 .l-privacy-in { max-width: var(--wrap); margin: 0 auto; padding-inline: 24px; }
 .l-on-dark { color: var(--a-300); }
-.l-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 26px; margin-top: 40px; }
+/* Wide enough tracks that five points land three-and-two. At 240px they laid
+   out four across and left the fifth alone underneath, which reads as a hole
+   rather than a second row. */
+.l-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 26px 34px; margin-top: 40px; }
 .l-columns h3 { font-size: 17px; font-weight: 500; margin: 0 0 8px; }
 .l-columns > div { border-top: 1px solid color-mix(in srgb, var(--text) 22%, transparent); padding-top: 18px; }
 .l-columns p { font-size: 14px; margin: 0; color: color-mix(in srgb, var(--text) 68%, transparent); }

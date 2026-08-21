@@ -84,8 +84,8 @@ def test_blocked_application_says_what_is_blocking_it_in_the_users_own_words():
 def test_blocked_without_a_reason_falls_back_to_the_catalogue():
     items = collect(row(status="blocked"))
     assert items[0].kind == "blocked"
-    assert english(items[0]) == "Waiting on a manual step"
-    assert polish(items[0]) == "Czeka na ręczny krok"
+    assert english(items[0]) == "Something has to be done by hand"
+    assert polish(items[0]) == "Trzeba coś zrobić ręcznie"
 
 
 def test_one_item_per_application_even_when_two_rules_match():
@@ -115,7 +115,7 @@ def test_a_missing_offer_or_company_does_not_crash_the_list():
 def test_the_nudge_is_phrased_in_the_readers_language():
     items = collect(row(submitted_at="2026-07-20T09:00:00+00:00"))
     assert english(items[0]) == "No answer for 27 days"
-    assert polish(items[0]) == "Bez odpowiedzi od 27 dni"
+    assert polish(items[0]) == "27 dni bez odpowiedzi"
 
 
 def test_a_deadline_today_is_not_reported_as_zero_days():
@@ -132,5 +132,5 @@ def test_one_day_reads_as_a_day_in_both_languages():
 
 def test_a_missed_deadline_says_how_long_ago():
     items = collect(row(status="draft", expires_at="2026-08-10"))
-    assert english(items[0]) == "Closed 6 days ago, never sent"
-    assert polish(items[0]) == "Zamknęła się 6 dni temu, nic nie poszło"
+    assert english(items[0]) == "The offer closed 6 days ago — you never sent it"
+    assert polish(items[0]) == "Oferta zamknęła się 6 dni temu — nic nie wysłałeś"

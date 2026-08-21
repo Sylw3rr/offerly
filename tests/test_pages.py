@@ -99,7 +99,7 @@ def test_dashboard_renders_with_nothing_to_chase(client):
     response = client.get("/dashboard")
     assert response.status_code == 200
     assert "Today" in response.text
-    assert "Nothing to chase" in response.text
+    assert "Nothing urgent today" in response.text
     # The ghosting window is stated rather than left as a mystery number.
     assert "21 days" in response.text
 
@@ -179,7 +179,7 @@ def test_answers_page_suggests_labels_when_empty(client):
     response = client.get("/answers")
     assert response.status_code == 200
     assert "Notice period" in response.text
-    assert "Nothing here yet" in response.text
+    assert "No saved answers yet" in response.text
 
 
 def test_answers_page_lists_saved_answers_with_a_copy_button(client, monkeypatch):
@@ -401,7 +401,7 @@ def test_the_statistics_page_draws_the_flow(client, monkeypatch):
 
 def test_an_empty_search_gets_an_explanation_rather_than_an_empty_frame(client):
     response = client.get("/stats")
-    assert "Nothing here yet" in response.text
+    assert "No applications yet" in response.text
     assert '<svg class="flow"' not in response.text
 
 

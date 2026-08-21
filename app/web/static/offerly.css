@@ -578,4 +578,24 @@ textarea.input { min-height: 92px; resize: vertical; }
 /* The repeated rule from the top of this file switches every animation here
    off; the script also skips its own listeners under the same query. */
 
+
+/* ── triage: the adverts one alert turned into ─────────────── */
+.triage { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
+.triage-row { display: flex; align-items: center; gap: 16px; padding: 11px 0;
+  border-top: 1px solid color-mix(in srgb, var(--text) 9%, transparent); }
+.triage-row.is-done { opacity: .55; }
+.triage-what { display: grid; gap: 2px; min-width: 0; }
+.triage-what strong { font-weight: 500; font-size: 14.5px; }
+.triage-what a { text-decoration: none; }
+.triage-what a:hover { text-decoration: underline; }
+.triage-what .muted-2 { font-size: 12.5px; }
+.triage-do { display: flex; gap: 6px; margin-left: auto; flex: none; }
+
+@media (max-width: 640px) {
+  /* The buttons go under the advert rather than squeezing its title into a
+     column two words wide. */
+  .triage-row { flex-wrap: wrap; gap: 8px; }
+  .triage-do { margin-left: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

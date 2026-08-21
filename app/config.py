@@ -28,10 +28,14 @@ class Settings(BaseSettings):
 
     # Empty means AI features stay switched off; the app runs fully without them.
     anthropic_api_key: str = ""
+    gemini_api_key: str = ""
+    # Flash is the cheap, fast tier, and reading a list out of an email is not
+    # work that a larger model does better.
+    gemini_model: str = "gemini-2.0-flash"
 
     @property
     def ai_enabled(self) -> bool:
-        return bool(self.anthropic_api_key)
+        return bool(self.anthropic_api_key or self.gemini_api_key)
 
 
 @lru_cache

@@ -14,6 +14,8 @@ from app.main import app
 
 USER = CurrentUser(id="u1", email="patryk@example.com", access_token="token")
 
+COLLECTED: dict = {}
+
 
 def arrived(**over):
     row = {
@@ -41,6 +43,8 @@ def client(monkeypatch):
     app.dependency_overrides[require_user] = lambda: USER
     moved, handled = [], []
     monkeypatch.setattr(repo, "list_inbound", lambda token, limit=60: ROWS)
+    # No adverts unless a test says so; collection has its own file.
+    monkeypatch.setattr(repo, "collected_offers", lambda token, ids: COLLECTED)
     monkeypatch.setattr(repo, "get_inbound", lambda token, i: next(r for r in ROWS if r["id"] == i))
     monkeypatch.setattr(repo, "change_status", lambda t, u, a, s, note=None: moved.append((a, s)))
     monkeypatch.setattr(repo, "mark_inbound_handled", lambda t, i: handled.append(i))
@@ -158,3 +162,97 @@ def test_an_empty_inbox_explains_how_to_fill_it(client, monkeypatch):
     response = client.get("/inbox")
     assert "Nothing has arrived yet" in response.text
     assert "Forward a board alert" in response.text
+
+
+# ── adverts collected out of an alert ────────────────────────────────
+
+
+def advert(**over):
+    row = {
+        "id": "o1",
+        "title": "Analityk danych",
+        "url": "https://www.pracuj.pl/praca/analityk,oferta,1000000002",
+        "location": "Mysłowice",
+        "status": "new",
+        "collected_from": "m1",
+        "salary_min": 6000,
+        "salary_max": 10000,
+        "salary_currency": "PLN",
+        "salary_kind": "gross",
+        "salary_period": "month",
+        "companies": {"name": "Firma Testowa"},
+    }
+    row.update(over)
+    return row
+
+
+@pytest.fixture
+def with_offers(monkeypatch):
+    """An alert that produced two adverts, one already dealt with."""
+    global ROWS
+    app.dependency_overrides[require_user] = lambda: USER
+    triaged = []
+    monkeypatch.setattr(
+        repo,
+        "list_inbound",
+        lambda token, limit=60: [
+            arrived(kind="offer_alert", application_id=None, applications=None)
+        ],
+    )
+    monkeypatch.setattr(
+        repo,
+        "collected_offers",
+        lambda token, ids: {"m1": [advert(), advert(id="o2", title="Monter", status="discarded")]},
+    )
+    monkeypatch.setattr(
+        repo,
+        "triage_offer",
+        lambda token, offer_id, keep, reason=None: triaged.append((offer_id, keep)),
+    )
+    client = TestClient(app)
+    client.triaged = triaged
+    yield client
+    app.dependency_overrides.clear()
+
+
+def test_an_alert_shows_what_it_contained(with_offers):
+    page = with_offers.get("/inbox").text
+    assert "Analityk danych" in page
+    assert "Firma Testowa" in page
+    assert "Mysłowice" in page
+
+
+def test_a_quoted_range_is_shown_in_the_units_the_advert_used(with_offers):
+    page = with_offers.get("/inbox").text
+    assert "6 000–10 000" in page
+
+
+def test_the_advert_links_out_to_the_board(with_offers):
+    assert (
+        'href="https://www.pracuj.pl/praca/analityk,oferta,1000000002"'
+        in with_offers.get("/inbox").text
+    )
+
+
+def test_only_an_untriaged_advert_offers_the_two_buttons(with_offers):
+    page = with_offers.get("/inbox").text
+    assert "/offers/o1/keep" in page
+    assert "/offers/o2/keep" not in page
+
+
+def test_keeping_an_advert_shortlists_it(with_offers):
+    response = with_offers.post("/offers/o1/keep", follow_redirects=False)
+    assert response.status_code == 303
+    assert with_offers.triaged == [("o1", True)]
+
+
+def test_discarding_an_advert_records_the_decision_rather_than_deleting_it(with_offers):
+    with_offers.post("/offers/o1/discard", follow_redirects=False)
+    assert with_offers.triaged == [("o1", False)]
+
+
+def test_triage_is_closed_to_anonymous_visitors(monkeypatch):
+    app.dependency_overrides.clear()
+    response = TestClient(app).post("/offers/o1/keep", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"

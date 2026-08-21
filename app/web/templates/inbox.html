@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "_icons.html" as ic %}
+{% import "_money.html" as money %}
 {% block title %}{{ t('nav.inbox') }} — Offerly{% endblock %}
 {% block body %}
 <main class="mid">
@@ -47,8 +48,50 @@
             </span>
           {% endif %}
 
+          {% if item.offers %}
+            {#
+              What the alert turned out to contain. Every field here was checked
+              back against the message before it was stored, so a row that is
+              missing a company is missing it because the alert never said one
+              — not because something guessed wrong.
+            #}
+            <ul class="triage">
+              {% for offer in item.offers %}
+                <li class="triage-row {{ 'is-done' if offer.status != 'new' }}">
+                  <div class="triage-what">
+                    <strong>
+                      {% if offer.url %}<a href="{{ offer.url }}" target="_blank" rel="noopener noreferrer">{{ offer.title }}</a>
+                      {% else %}{{ offer.title }}{% endif %}
+                    </strong>
+                    <span class="muted-2">
+                      {{ offer.companies.name if offer.companies else t('triage.no_company') }}
+                      {%- if offer.location %} · {{ offer.location }}{% endif %}
+                      {%- if offer.salary_min %} · {{ money.offer_range(t, offer) }}{% endif %}
+                    </span>
+                  </div>
+                  {% if offer.status == 'new' %}
+                    <div class="triage-do">
+                      <form method="post" action="/offers/{{ offer.id }}/keep" style="margin:0">
+                        <button class="btn btn-primary btn-sm" type="submit">{{ t('triage.keep') }}</button>
+                      </form>
+                      <form method="post" action="/offers/{{ offer.id }}/discard" style="margin:0">
+                        <button class="btn btn-ghost" type="submit">{{ t('triage.discard') }}</button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span class="tag {{ 'tag-accent' if offer.status == 'shortlisted' else 'tag-neutral' }}">
+                      {{ t('triage.' ~ offer.status) }}
+                    </span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
           {% if item.handled_at %}
             <span class="muted-2" style="font-size:12.5px">{{ t('inbox.done') }}</span>
+          {% elif item.offers and not item.untriaged %}
+            <span class="muted-2" style="font-size:12.5px">{{ t('triage.all_done') }}</span>
           {% else %}
             <div class="row" style="gap:8px">
               {% if item.actionable %}

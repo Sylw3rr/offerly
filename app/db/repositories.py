@@ -523,3 +523,60 @@ def funnel_stats(token: str) -> dict[str, Any]:
     the one number this product exists to report.
     """
     return funnel.headline(all_status_events(token), current_statuses(token))
+
+
+def offers_from_message(token: str, inbound_id: str) -> list[dict[str, Any]]:
+    """The adverts one alert produced, newest board order preserved."""
+    result = (
+        user_client(token)
+        .table("offers")
+        .select(
+            "id, title, url, location, status, salary_min, salary_max, "
+            "salary_currency, salary_kind, salary_period, companies(name)"
+        )
+        .eq("collected_from", inbound_id)
+        .order("created_at")
+        .execute()
+    )
+    return result.data or []
+
+
+def collected_offers(token: str, inbound_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+    """Every collected advert for these messages, grouped by the message.
+
+    One query for the whole page: the inbox lists up to sixty messages, and
+    asking per message is how a list view becomes sixty round trips.
+    """
+    if not inbound_ids:
+        return {}
+    result = (
+        user_client(token)
+        .table("offers")
+        .select(
+            "id, title, url, location, status, collected_from, salary_min, salary_max, "
+            "salary_currency, salary_kind, salary_period, companies(name)"
+        )
+        .in_("collected_from", inbound_ids)
+        .order("created_at")
+        .execute()
+    )
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in result.data or []:
+        grouped.setdefault(row["collected_from"], []).append(row)
+    return grouped
+
+
+def triage_offer(token: str, offer_id: str, keep: bool, reason: str | None = None) -> None:
+    """Shortlist an advert or discard it.
+
+    The two outcomes the schema has always named. Discarding keeps the row and
+    the reason rather than deleting it: the same advert arrives again next
+    week, and knowing it was already turned down is the point.
+    """
+    user_client(token).table("offers").update(
+        {
+            "status": "shortlisted" if keep else "discarded",
+            "discard_reason": None if keep else (reason or None),
+            "updated_at": _now(),
+        }
+    ).eq("id", offer_id).execute()

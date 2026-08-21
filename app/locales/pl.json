@@ -427,5 +427,13 @@
   "landing.end.cta": "Napisz po kod",
   "landing.end.note": "Trafia na kontakt@offerly.com.pl. Formularz zapisujący adresy dojdzie później — wolimy ich nie zbierać, zanim jest gdzie je bezpiecznie trzymać.",
   "landing.footer.tagline": "Tracker zgłoszeń o pracę · po polsku i angielsku · licencja MIT",
-  "landing.footer.top": "Na górę"
+  "landing.footer.top": "Na górę",
+  "triage.keep": "Zostaw",
+  "triage.discard": "Odrzuć",
+  "triage.shortlisted": "zostawione",
+  "triage.discarded": "odrzucone",
+  "triage.no_company": "firma nie podana",
+  "triage.all_done": "Przejrzane w całości.",
+  "landing.privacy.t5": "Alerty czyta model",
+  "landing.privacy.d5": "Treść przekierowanych alertów trafia do Google Gemini, żeby wyciągnąć z niej stanowisko, firmę, miasto i widełki. Idą tam same alerty z portali — nigdy odpowiedzi pracodawców, notatki ani CV. Każde pole wraca sprawdzone: jeśli nie ma go dosłownie w mailu, jest wyrzucane."
 }

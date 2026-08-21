@@ -37,15 +37,22 @@ def _suggestion(row: dict) -> str | None:
 @router.get("/inbox", response_class=HTMLResponse)
 def inbox(request: Request, user: CurrentUser = Depends(require_user)):
     rows = repo.list_inbound(user.access_token)
+    collected = repo.collected_offers(user.access_token, [row["id"] for row in rows])
 
     items = []
     for row in rows:
         application = row.get("applications") or {}
         offer = application.get("offers") or {}
         suggestion = _suggestion(row)
+        offers = collected.get(row["id"], [])
         items.append(
             {
                 **row,
+                "offers": offers,
+                # An alert nobody has been through yet. Kept separate from
+                # `actionable`, which means a reply is waiting on a decision:
+                # the two look the same in the list and are not the same job.
+                "untriaged": sum(1 for offer in offers if offer["status"] == "new"),
                 "suggestion": suggestion,
                 "company": (offer.get("companies") or {}).get("name"),
                 "title": offer.get("title"),
@@ -99,4 +106,17 @@ def confirm(inbound_id: str, user: CurrentUser = Depends(require_user)):
 @router.post("/inbox/{inbound_id}/dismiss")
 def dismiss(inbound_id: str, user: CurrentUser = Depends(require_user)):
     repo.mark_inbound_handled(user.access_token, inbound_id)
+    return RedirectResponse("/inbox", status_code=303)
+
+
+@router.post("/offers/{offer_id}/keep")
+def keep_offer(offer_id: str, user: CurrentUser = Depends(require_user)):
+    """Shortlist an advert that arrived by mail."""
+    repo.triage_offer(user.access_token, offer_id, keep=True)
+    return RedirectResponse("/inbox", status_code=303)
+
+
+@router.post("/offers/{offer_id}/discard")
+def discard_offer(offer_id: str, user: CurrentUser = Depends(require_user)):
+    repo.triage_offer(user.access_token, offer_id, keep=False)
     return RedirectResponse("/inbox", status_code=303)

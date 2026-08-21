@@ -134,6 +134,8 @@ CI runs the same three commands on every push and pull request.
 | `INGEST_DOMAIN` | from v0.2 | Domain for per-user forwarding addresses |
 | `INGEST_WEBHOOK_SECRET` | from v0.2 | Verifies the inbound-email webhook |
 | `ANTHROPIC_API_KEY` | no | Leave empty to run without AI features |
+| `GEMINI_API_KEY` | no | Reads adverts out of forwarded alerts. Empty means only boards with a written parser are read |
+| `GEMINI_MODEL` | no | Defaults to `gemini-2.0-flash` |
 
 Both keys are on **Project Settings → API Keys**. Current projects issue keys in the
 `sb_publishable_…` / `sb_secret_…` format; the pinned `supabase` version understands

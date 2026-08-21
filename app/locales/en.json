@@ -427,5 +427,13 @@
   "landing.end.cta": "Write for a code",
   "landing.end.note": "This writes to kontakt@offerly.com.pl. A form that stores addresses comes later — we would rather not collect them before there is somewhere safe to keep them.",
   "landing.footer.tagline": "Job application tracker · in Polish and English · MIT licence",
-  "landing.footer.top": "Back to top"
+  "landing.footer.top": "Back to top",
+  "triage.keep": "Keep",
+  "triage.discard": "Discard",
+  "triage.shortlisted": "kept",
+  "triage.discarded": "discarded",
+  "triage.no_company": "no company given",
+  "triage.all_done": "All of it triaged.",
+  "landing.privacy.t5": "A model reads the alerts",
+  "landing.privacy.d5": "The text of forwarded board alerts goes to Google Gemini to pull out the role, company, city and salary. Only alerts go — never an employer's reply, your notes, or a CV. Every field comes back checked against the message, and anything not literally in it is thrown away."
 }

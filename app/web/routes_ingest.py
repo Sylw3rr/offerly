@@ -9,15 +9,20 @@ happen where a person can see it.
 
 import hashlib
 import hmac
+import logging
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 
+from app.ai import offer_reader
 from app.config import get_settings
 from app.db import ingest_repo
 from app.ingest import matching
 from app.ingest.forwarding import looks_forwarded, unwrap
 from app.ingest.mime import trim_quoted, unpack
-from app.ingest.reading import KIND_REPLY, Message, read
+from app.ingest.reading import KIND_OFFER, KIND_REPLY, Message, read
+from app.plans import OFFERS_COLLECTED, for_profile
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["ingest"])
 
@@ -36,8 +41,32 @@ def _authentic(body: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected, (signature or "").strip().lower())
 
 
+def collect_offers(user_id: str, inbound_id: str, body: str, source: str | None) -> None:
+    """Read the adverts out of an alert and store them.
+
+    Runs after the webhook has answered. Reading an alert with a model takes
+    seconds and can fail, and a mail router that waits on that — or receives a
+    500 because of it — retries, which is how one alert becomes four. The
+    message is already saved by the time this runs, so the worst outcome is an
+    alert sitting in the inbox unparsed, which is where alerts sat before this
+    existed.
+    """
+    try:
+        found = offer_reader.read_offers(body, source)
+        if not found:
+            return
+        plan = for_profile(ingest_repo.profile_of(user_id))
+        ingest_repo.save_offers(
+            user_id, inbound_id, found, source, ceiling=plan.limit(OFFERS_COLLECTED)
+        )
+    except Exception:  # noqa: BLE001 — a background task must not die silently
+        log.exception("collecting offers from %s failed", inbound_id)
+
+
 @router.post("/ingest/email")
-async def receive(request: Request, x_offerly_signature: str = Header("")):
+async def receive(
+    request: Request, background: BackgroundTasks, x_offerly_signature: str = Header("")
+):
     raw = await request.body()
     if len(raw) > MAX_BYTES:
         raise HTTPException(status_code=413, detail="too large")
@@ -96,11 +125,14 @@ async def receive(request: Request, x_offerly_signature: str = Header("")):
             message.body,
         )
 
-    ingest_repo.store(owner, message, reading, match)
+    inbound_id = ingest_repo.store(owner, message, reading, match)
 
     # Only a confident reading of a confident match moves anything. Everything
     # else waits in the inbox, which is the whole point of having one.
     if reading.kind == KIND_REPLY and reading.sure and match and match.sure and reading.status:
         ingest_repo.advance(owner, match.application_id, reading.status, message.subject)
+
+    if reading.kind == KIND_OFFER:
+        background.add_task(collect_offers, owner, inbound_id, message.body, reading.source)
 
     return {"status": "accepted"}

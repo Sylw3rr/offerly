@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.auth.dependencies import _RedirectToLogin, get_current_user, set_session_cookies
@@ -86,6 +86,20 @@ async def persist_refreshed_session(request: Request, call_next):
 @app.exception_handler(_RedirectToLogin)
 def _handle_redirect_to_login(request: Request, exc: _RedirectToLogin):
     return RedirectResponse("/login", status_code=303)
+
+
+ICON = Path(__file__).parent / "web" / "static" / "favicon.ico"
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    """Served from the root as well as from /static.
+
+    The document says where its icon is, but plenty of things never read the
+    document: crawlers, feed readers and browser history all just ask for
+    /favicon.ico and take a 404 as "no icon". Google is among them.
+    """
+    return FileResponse(ICON, media_type="image/x-icon")
 
 
 @app.get("/health", tags=["meta"])

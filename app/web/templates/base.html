@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>{% block title %}Offerly{% endblock %}</title>
+
+  {#
+    The mark, everywhere something asks for one: the tab, a search result, and
+    a phone's home screen.
+
+    The .ico is listed before the .svg on purpose. A browser that understands
+    both takes the last one it can use, so the scalable file wins where it is
+    supported; the .ico is what everything else — and Google's crawler — reads.
+
+    Sizes are declared rather than left to be discovered, because a crawler
+    that has to fetch a file to find out how big it is may decide not to.
+  #}
+  <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="16x16 32x32 48x48 64x64">
+  <link rel="icon" href="{{ asset('icon.svg') }}" type="image/svg+xml">
+  {# iOS takes neither a manifest icon nor an SVG here. #}
+  <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+  {# What the phone paints its own chrome with while the page is open. #}
+  <meta name="theme-color" content="#161826">
+  <meta name="apple-mobile-web-app-title" content="Offerly">
+
   <link rel="stylesheet" href="{{ asset('offerly.css') }}">
 </head>
 <body>

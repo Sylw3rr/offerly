@@ -1,3 +1,7 @@
 -r requirements.txt
 pytest==8.3.4
 ruff==0.9.2
+# Draws the app icons (scripts/make_icons.py) and checks them in the tests.
+# Deliberately not in requirements.txt: the generated files are committed, so
+# the running server only ever serves them.
+Pillow==12.3.0

@@ -46,7 +46,22 @@
   <section class="l-hero">
     <div>
       <span class="l-kicker" data-reveal><i class="l-dot"></i>{{ t('landing.kicker') }}</span>
-      <h1 class="l-h1" data-reveal>{{ t('landing.h1') }}</h1>
+      {#
+        The brand is lit separately from the sentence around it. Split rather
+        than marked up in the catalogue: a translator should be handed a
+        sentence, not a span, and splitting on the name keeps every part an
+        escaped string — no `|safe` anywhere near a heading.
+
+        A catalogue that somehow lost the name still renders: `parts[0]` is
+        then the whole line and the loop simply adds nothing after it.
+      #}
+      {% set parts = t('landing.h1').split('Offerly') %}
+      <h1 class="l-h1" data-reveal>
+        {{- parts[0] -}}
+        {%- for tail in parts[1:] -%}
+          <span class="l-shine">Offerly</span>{{ tail }}
+        {%- endfor -%}
+      </h1>
       <p class="l-lead" data-reveal>{{ t('landing.lead') }}</p>
       <div class="l-hero-cta" data-reveal>
         <a class="btn btn-primary l-cta-big" href="{{ contact_link }}" data-magnetic>{{ t('landing.cta') }}</a>

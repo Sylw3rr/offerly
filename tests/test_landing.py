@@ -128,3 +128,39 @@ def test_the_pricing_names_no_amount_that_cannot_be_paid(fresh):
     """
     amounts = re.findall(r"\d[\d\s,.–-]*\s*(?:zł|PLN|EUR|USD|€|\$)", fresh.get("/").text)
     assert amounts == []
+
+
+def test_the_heading_reads_whole_even_though_the_brand_is_lit_separately(fresh):
+    """The brand is wrapped in a span so it can shimmer. Splitting a sentence to
+    style one word is how a sentence loses a word."""
+    import re
+
+    for query, expected in (
+        ("/", "Wysyłasz. Czekasz. Offerly pamięta za Ciebie."),
+        ("/?lang=en", "You send. You wait. Offerly remembers for you."),
+    ):
+        html = fresh.get(query).text
+        heading = re.search(r'<h1 class="l-h1"[^>]*>(.*?)</h1>', html, re.S).group(1)
+        assert re.sub(r"<[^>]+>", "", heading).split() == expected.split(), query
+
+
+def test_the_lit_brand_is_marked_up_once(fresh):
+    assert fresh.get("/").text.count('class="l-shine"') == 1
+
+
+def test_a_heading_without_the_brand_still_renders(fresh, monkeypatch):
+    """`split` on a word that is not there returns the whole string, and the
+    loop that adds the span simply does not run. Worth pinning: the failure
+    mode would be a blank hero, on the only page a stranger sees."""
+    import app.i18n as i18n
+
+    real = i18n.translator
+
+    def without_brand(lang):
+        inner = real(lang)
+        return lambda key, **kw: "Nic tu nie ma." if key == "landing.h1" else inner(key, **kw)
+
+    monkeypatch.setattr(i18n, "translator", without_brand)
+    html = fresh.get("/").text
+    assert "Nic tu nie ma." in html
+    assert 'class="l-shine"' not in html

@@ -598,4 +598,65 @@ textarea.input { min-height: 92px; resize: vertical; }
   .triage-do { margin-left: 0; }
 }
 
+/* ── the brand, lit ────────────────────────────────────────── */
+
+/* A band of accent and white travels through the word and then rests. The
+   colour is painted behind the letters and clipped to them, which means the
+   text is only visible because the paint is: `color: transparent` in a browser
+   that cannot clip a background to text is a heading with a hole in it. So the
+   word is given a real colour first, and only made transparent inside the
+   @supports that proves clipping works. */
+.l-shine {
+  color: var(--a-300);
+  /* The band is the accent, not a paler tint of the text: --a-300 and --text
+     sit at nearly the same luminance, so a shimmer built from those two
+     crosses the word and cannot be seen doing it. Widened as well — a 10%
+     slice of a 300% image is about nineteen pixels on a word this size. */
+  background-image: linear-gradient(
+    100deg,
+    var(--text) 0%, var(--text) 40%,
+    var(--accent) 46%, #ffffff 50%, var(--accent) 54%,
+    var(--text) 60%, var(--text) 100%
+  );
+  background-size: 240% 100%;
+  /* Tiled, not `no-repeat`. The paint is what makes the letters visible, so any
+     position that leaves part of the word outside the image is a word with
+     letters missing — at rest this read "ferly". Both ends of the gradient are
+     the same colour, so tiling has no visible seam. */
+  background-repeat: repeat;
+  /* Where the sweep ends and where it stays when motion is off: the band has
+     travelled past, and the word is left in the plain text colour. */
+  background-position: 0% 50%;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .l-shine {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Safari paints the fill colour over a clipped background without this. */
+    -webkit-text-fill-color: transparent;
+    animation: l-shine 7s ease-in-out infinite;
+  }
+}
+
+/* The sweep takes the first half and the rest of the cycle is still. A shimmer
+   that never stops is a heading that never stops asking to be looked at. */
+@keyframes l-shine {
+  0% { background-position: 100% 50%; }
+  52% { background-position: 0% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* High-contrast modes replace colours but not this kind of paint, so the word
+   would drop out entirely. Hand it back to the system. */
+@media (forced-colors: active) {
+  .l-shine {
+    background-image: none;
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+    forced-color-adjust: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

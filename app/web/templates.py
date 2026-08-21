@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.i18n import template_globals
+from app.web.assets import asset
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -28,6 +29,12 @@ def render(
     return templates.TemplateResponse(
         request,
         name,
-        {**template_globals(request), **(context or {})},
+        {
+            **template_globals(request),
+            # Content-stamped URLs, so a cache cannot serve yesterday's
+            # stylesheet against today's markup. See app/web/assets.py.
+            "asset": lambda path: asset(request, path),
+            **(context or {}),
+        },
         status_code=status_code,
     )

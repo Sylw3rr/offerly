@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>{% block title %}Offerly{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='offerly.css') }}">
+  <link rel="stylesheet" href="{{ asset('offerly.css') }}">
 </head>
 <body>
   {% import "_icons.html" as ic %}
@@ -43,6 +43,6 @@
   {% block body %}{% endblock %}
 
   {% if user %}{% include "_palette.html" %}{% endif %}
-  <script src="{{ url_for('static', path='offerly.js') }}" defer></script>
+  <script src="{{ asset('offerly.js') }}" defer></script>
 </body>
 </html>

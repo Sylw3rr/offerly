@@ -164,3 +164,38 @@ def test_a_heading_without_the_brand_still_renders(fresh, monkeypatch):
     html = fresh.get("/").text
     assert "Nic tu nie ma." in html
     assert 'class="l-shine"' not in html
+
+
+def test_static_urls_carry_the_file_version(fresh):
+    """Cloudflare holds our stylesheet for four hours. Without a stamp in the
+    URL, a deploy ships new markup to browsers still being handed the old CSS
+    — which is exactly what happened to the hero shimmer."""
+    import re
+
+    html = fresh.get("/").text
+    for name in ("offerly.css", "landing.js"):
+        assert re.search(rf"{re.escape(name)}\?v=[0-9a-f]{{8}}", html), name
+
+
+def test_the_version_changes_when_the_file_does(tmp_path, monkeypatch):
+    from app.web import assets
+
+    monkeypatch.setattr(assets, "STATIC_DIR", tmp_path)
+    target = tmp_path / "x.css"
+
+    target.write_text("a{}", encoding="utf-8")
+    assets.digest.cache_clear()
+    first = assets.digest("x.css")
+
+    target.write_text("a{color:red}", encoding="utf-8")
+    assets.digest.cache_clear()
+    assert assets.digest("x.css") != first
+
+
+def test_a_missing_asset_does_not_raise(tmp_path, monkeypatch):
+    """A broken link is a broken link; a template that raises is a blank page."""
+    from app.web import assets
+
+    monkeypatch.setattr(assets, "STATIC_DIR", tmp_path)
+    assets.digest.cache_clear()
+    assert assets.digest("nope.css") == ""

@@ -52,7 +52,12 @@
           {{ ic.icon('coffee') }}
           <strong>{{ t('dash.empty_title') }}</strong>
           <p>{{ t('dash.empty_body', days=ghost_after_days) }}</p>
-          <a class="btn btn-secondary" href="/applications/new">{{ t('action.add_application') }}</a>
+          <div class="row" style="justify-content:center">
+            <a class="btn btn-secondary" href="/applications/new">{{ t('action.add_application') }}</a>
+            {# The empty dashboard is where a new account lands after its first
+               sign-in, and forwarding is the thing that fills it. #}
+            <a class="btn btn-ghost" href="/start">{{ t('dash.setup_cta') }}</a>
+          </div>
         </div>
       {% endif %}
     </section>

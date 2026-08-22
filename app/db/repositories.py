@@ -599,3 +599,15 @@ def set_language(token: str, user_id: str, lang: str) -> None:
     user_client(token).table("profiles").update({"lang": lang, "updated_at": _now()}).eq(
         "id", user_id
     ).execute()
+
+
+def inbound_count(token: str) -> int:
+    """How many messages have ever reached this account's address.
+
+    Zero is the only number the onboarding page treats as meaningful: it means
+    forwarding is not working yet, whatever anyone believes.
+    """
+    result = (
+        user_client(token).table("inbound_emails").select("id", count="exact").limit(1).execute()
+    )
+    return result.count or 0

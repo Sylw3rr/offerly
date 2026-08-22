@@ -281,7 +281,7 @@
     <span class="l-sec-kicker" data-reveal>{{ t('landing.road.kicker') }}</span>
     <h2 class="l-h2" data-reveal>{{ t('landing.road.h2') }}</h2>
     <ol class="l-road">
-      {% for n, mark in [(1, 'done'), (2, 'now'), (3, ''), (4, '')] %}
+      {% for n, mark in [(1, 'done'), (2, 'done'), (3, 'now'), (4, '')] %}
         <li data-reveal class="{% if mark %}l-road-{{ mark }}{% endif %}">
           <span class="l-road-v">v0.{{ n }}</span>
           <span>{{ t('landing.road.' ~ n) }}</span>

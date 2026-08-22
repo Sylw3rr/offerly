@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% import "_icons.html" as ic %}
+{% block title %}{{ t('start.title') }} — Offerly{% endblock %}
+{% block body %}
+<main class="narrow">
+  <div class="page-head">
+    <div>
+      <h1>{{ t('start.title') }}</h1>
+      <p>{{ t('start.lead') }}</p>
+    </div>
+  </div>
+
+  {#
+    Whether the setup worked is observed, not asked. Anything that has arrived
+    proves the forwarding runs; a checkbox would only record what somebody
+    believed while they were reading this page.
+  #}
+  <div class="card {{ 'accented' if arrived else '' }}">
+    <div class="row" style="align-items:baseline">
+      {{ ic.icon('tray', 'i-lg') }}
+      <strong style="font-weight:500;font-size:15px">
+        {{ t('start.working', count=arrived) if arrived else t('start.waiting') }}
+      </strong>
+      {% if arrived %}
+        <a class="btn btn-ghost" href="/inbox" style="margin-left:auto">{{ t('start.see_inbox') }}</a>
+      {% endif %}
+    </div>
+    <p class="muted" style="margin:0;font-size:13.5px">
+      {{ t('start.working_body') if arrived else t('start.waiting_body') }}
+    </p>
+  </div>
+
+  {% if not address %}
+    <div class="card">
+      <p class="muted" style="margin:0">{{ t('start.no_domain') }}</p>
+    </div>
+  {% else %}
+
+  <ol class="steps">
+    <li>
+      <h2>{{ t('start.s1_title') }}</h2>
+      <p class="muted">{{ t('start.s1_body') }}</p>
+      <div class="row">
+        <code id="start-address" class="input" style="flex:1;min-width:240px;padding:9px 11px">{{ address }}</code>
+        <button class="btn btn-secondary" type="button" data-copy="start-address"
+                data-copy-done="{{ t('toast.copied') }}">{{ ic.icon('copy') }}{{ t('action.copy') }}</button>
+      </div>
+      <p class="muted-2" style="font-size:12.5px;margin:8px 0 0">{{ t('start.s1_note') }}</p>
+    </li>
+
+    <li>
+      <h2>{{ t('start.s2_title') }}</h2>
+      <p class="muted">{{ t('start.s2_body') }}</p>
+      {#
+        The step everyone gets stuck on. Gmail refuses to forward anywhere it
+        has not verified, and it verifies by mailing a code to the address —
+        which is ours, so the code lands in Offerly rather than anywhere the
+        reader is looking. It goes in the subject line, so the inbox list shows
+        it without opening anything.
+      #}
+      <div class="card accented" style="margin-top:12px">
+        <span class="card-kicker">{{ t('start.s2_catch_kicker') }}</span>
+        <p style="margin:0;font-size:14px">{{ t('start.s2_catch') }}</p>
+        <a class="btn btn-secondary btn-sm" href="/inbox" style="align-self:flex-start">
+          {{ ic.icon('tray') }}{{ t('start.s2_catch_cta') }}
+        </a>
+      </div>
+    </li>
+
+    <li>
+      <h2>{{ t('start.s3_title') }}</h2>
+      <p class="muted">{{ t('start.s3_body') }}</p>
+
+      <p class="muted-2" style="font-size:12.5px;margin:14px 0 6px">{{ t('start.s3_boards') }}</p>
+      <div class="row">
+        <code id="start-boards" class="input" style="flex:1;min-width:240px;padding:9px 11px;font-size:12.5px">{{ board_filter }}</code>
+        <button class="btn btn-secondary" type="button" data-copy="start-boards"
+                data-copy-done="{{ t('toast.copied') }}">{{ ic.icon('copy') }}{{ t('action.copy') }}</button>
+      </div>
+
+      <p class="muted-2" style="font-size:12.5px;margin:18px 0 6px">{{ t('start.s3_replies') }}</p>
+      <div class="row">
+        <code id="start-replies" class="input" style="flex:1;min-width:240px;padding:9px 11px;font-size:12.5px">{{ reply_filter }}</code>
+        <button class="btn btn-secondary" type="button" data-copy="start-replies"
+                data-copy-done="{{ t('toast.copied') }}">{{ ic.icon('copy') }}{{ t('action.copy') }}</button>
+      </div>
+      <p class="muted-2" style="font-size:12.5px;margin:8px 0 0">{{ t('start.s3_replies_note') }}</p>
+    </li>
+  </ol>
+
+  <div class="card">
+    <h2>{{ t('start.next_title') }}</h2>
+    <p class="muted" style="margin:0;font-size:13.5px">{{ t('start.next_body') }}</p>
+    <div class="row">
+      <a class="btn btn-primary" href="/applications/new">{{ ic.icon('plus') }}{{ t('action.add_application') }}</a>
+      <a class="btn btn-secondary" href="/answers">{{ t('nav.answers') }}</a>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

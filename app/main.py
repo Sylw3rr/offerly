@@ -20,6 +20,7 @@ from app.web.routes_auth import router as auth_router
 from app.web.routes_dashboard import router as dashboard_router
 from app.web.routes_inbox import router as inbox_router
 from app.web.routes_ingest import router as ingest_router
+from app.web.routes_start import router as start_router
 from app.web.routes_stats import router as stats_router
 from app.web.templates import render
 
@@ -42,6 +43,7 @@ app.include_router(dashboard_router)
 app.include_router(inbox_router)
 app.include_router(applications_router)
 app.include_router(answers_router)
+app.include_router(start_router)
 app.include_router(stats_router)
 app.include_router(account_router)
 app.include_router(ingest_router)

@@ -695,4 +695,24 @@ textarea.input { min-height: 92px; resize: vertical; }
   }
 }
 
+/* ── setup steps ───────────────────────────────────────────── */
+/* Numbers drawn by a counter rather than a list marker: the marker sits
+   outside the card and cannot be styled to sit inside one. */
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 14px; }
+.steps > li { counter-increment: step; position: relative;
+  padding: 22px 24px 22px 62px; border-radius: var(--r-md);
+  background: var(--surface); box-shadow: var(--shadow-sm); }
+.steps > li::before { content: counter(step); position: absolute; left: 22px; top: 22px;
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-variant-numeric: tabular-nums;
+  color: var(--accent); border: 1px solid var(--accent); }
+.steps h2 { font-size: 16px; margin: 0 0 4px; }
+.steps p { font-size: 14px; }
+.steps .card { background: color-mix(in srgb, var(--accent) 8%, transparent); box-shadow: none; }
+
+@media (max-width: 640px) {
+  .steps > li { padding: 20px 18px 20px 18px; }
+  .steps > li::before { position: static; margin-bottom: 10px; }
+}
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

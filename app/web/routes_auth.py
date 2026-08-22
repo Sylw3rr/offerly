@@ -67,7 +67,9 @@ def signup(
             status_code=400,
         )
 
-    response = RedirectResponse("/", status_code=303)
+    # A new account has nothing to look at and one thing to do. The dashboard
+    # can wait until there is something on it.
+    response = RedirectResponse("/start", status_code=303)
     set_session_cookies(response, session)
     return response
 

@@ -136,6 +136,8 @@ CI runs the same three commands on every push and pull request.
 | `ANTHROPIC_API_KEY` | no | Leave empty to run without AI features |
 | `GEMINI_API_KEY` | no | Reads adverts out of forwarded alerts. Empty means only boards with a written parser are read |
 | `GEMINI_MODEL` | no | Defaults to `gemini-2.0-flash` |
+| `RESEND_API_KEY` | no | Reminder mail. Empty means nothing is sent |
+| `MAIL_FROM` | no | Sender address, e.g. `Offerly <przypomnienia@offerly.com.pl>` |
 
 Both keys are on **Project Settings → API Keys**. Current projects issue keys in the
 `sb_publishable_…` / `sb_secret_…` format; the pinned `supabase` version understands

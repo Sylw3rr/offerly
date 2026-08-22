@@ -334,7 +334,10 @@ def get_profile(token: str) -> dict[str, Any]:
     client = user_client(token)
     result = (
         client.table("profiles")
-        .select("display_name, ghost_after_days, plan, plan_until, ingest_token")
+        .select(
+            "display_name, ghost_after_days, plan, plan_until, "
+            "ingest_token, reminders_enabled, lang"
+        )
         .limit(1)
         .execute()
     )
@@ -346,6 +349,8 @@ def get_profile(token: str) -> dict[str, Any]:
         "plan": "free",
         "plan_until": None,
         "ingest_token": None,
+        "reminders_enabled": True,
+        "lang": None,
     }
 
 
@@ -580,3 +585,17 @@ def triage_offer(token: str, offer_id: str, keep: bool, reason: str | None = Non
             "updated_at": _now(),
         }
     ).eq("id", offer_id).execute()
+
+
+def set_reminders(token: str, user_id: str, enabled: bool) -> None:
+    """Turn the reminder mails on or off for this account."""
+    user_client(token).table("profiles").update(
+        {"reminders_enabled": enabled, "updated_at": _now()}
+    ).eq("id", user_id).execute()
+
+
+def set_language(token: str, user_id: str, lang: str) -> None:
+    """Record the interface language on the account, for work that has no browser."""
+    user_client(token).table("profiles").update({"lang": lang, "updated_at": _now()}).eq(
+        "id", user_id
+    ).execute()

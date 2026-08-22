@@ -354,8 +354,8 @@
   "landing.features.d4": "You get a separate address and forward job-board alerts to it. They land here instead of your mailbox — already split into role, company, city and salary.",
   "landing.features.t5": "Employer replies",
   "landing.features.d5": "Mail from an employer finds the application it belongs to. When that is obvious, the status changes on its own. When it is not, we ask you.",
-  "landing.features.t6": "CV statistics",
-  "landing.features.d6": "What share of applications get a reply — separately for each CV version, each board and each salary bracket. That is how you learn which CV to keep sending.",
+  "landing.features.t6": "Numbers you can see",
+  "landing.features.d6": "How many went out, how many are waiting, how many replied — the funnel and the reply rate, free, across the whole search.",
   "landing.features.paid": "on the Plus plan",
   "landing.stats.kicker": "STATISTICS",
   "landing.stats.h2": "Which CV version actually draws answers",
@@ -435,5 +435,14 @@
   "triage.no_company": "no company given",
   "triage.all_done": "All sorted.",
   "landing.privacy.t5": "A model reads the alerts",
-  "landing.privacy.d5": "The text of forwarded board alerts goes to Google Gemini to pull out the role, company, city and salary. Only alerts go — never an employer's reply, your notes, or a CV. Every field comes back checked against the message, and anything not literally in it is thrown away."
+  "landing.privacy.d5": "The text of forwarded board alerts goes to Google Gemini to pull out the role, company, city and salary. Only alerts go — never an employer's reply, your notes, or a CV. Every field comes back checked against the message, and anything not literally in it is thrown away.",
+  "landing.stats.paid": "the per-CV breakdown is in Plus",
+  "mail.nudge.subject": "{company} — {why}",
+  "mail.nudge.body": "{company}, {role}.\n{why}.\n\n{url}\n\n—\nThis is the only mail about this application. Offerly does not repeat itself.\nReminders can be switched off in your account settings.",
+  "mail.summary.subject": "This week: {count}",
+  "mail.summary.body": "{lines}\n\n{url}\n\n—\nThe summary arrives on Mondays, and only when there is something to say.\nYou can switch it off in your account settings.",
+  "mail.summary.line": "• {company}, {role} — {why}",
+  "account.reminders_title": "Reminders",
+  "account.reminders_body": "A mail when something is closing or has gone quiet, and a summary on Monday. One mail per application.",
+  "account.reminders_toggle": "Send reminders"
 }

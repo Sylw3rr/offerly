@@ -115,8 +115,22 @@ def test_the_invitation_is_a_message_not_a_form(fresh):
     assert 'type="email"' not in text
 
 
-def test_the_two_paid_features_are_marked_as_paid(fresh):
-    assert fresh.get("/").text.count("w planie Plus") == 2
+def test_exactly_the_two_paid_features_are_marked_in_the_grid(fresh):
+    """Counting the marker across the page would also catch the statistics
+    section, which says the same thing about a different feature."""
+    import re
+
+    grid = re.search(r'id="funkcje".*?</section>', fresh.get("/").text, re.S).group(0)
+    assert grid.count('class="l-paid"') == 2
+
+
+def test_the_statistics_section_says_its_breakdown_is_paid(fresh):
+    """The section shows the per-CV breakdown, and that is the Plus feature.
+    The free plan gets the funnel and the overall reply rate."""
+    import re
+
+    section = re.search(r'id="statystyki".*?</section>', fresh.get("/").text, re.S).group(0)
+    assert 'class="l-paid"' in section
 
 
 def test_the_pricing_names_no_amount_that_cannot_be_paid(fresh):

@@ -354,8 +354,8 @@
   "landing.features.d4": "Dostajesz osobny adres i przekierowujesz na niego alerty z portali. Lądują tutaj, nie w Twojej poczcie — już rozbite na stanowisko, firmę, miasto i widełki.",
   "landing.features.t5": "Odpowiedzi pracodawców",
   "landing.features.d5": "Mail od pracodawcy sam trafia do zgłoszenia, którego dotyczy. Kiedy to oczywiste, status zmienia się sam. Kiedy nie — pytamy Ciebie.",
-  "landing.features.t6": "Statystyki CV",
-  "landing.features.d6": "Ile procent zgłoszeń dostaje odpowiedź — osobno dla każdej wersji CV, każdego portalu i każdych widełek. Stąd wiesz, które CV wysyłać dalej.",
+  "landing.features.t6": "Liczby, które widać",
+  "landing.features.d6": "Ile zgłoszeń poszło, ile czeka, ile odpowiedziało — lejek i odsetek odpowiedzi za darmo, dla całego szukania.",
   "landing.features.paid": "w planie Plus",
   "landing.stats.kicker": "STATYSTYKI",
   "landing.stats.h2": "Która wersja CV naprawdę dostaje odpowiedzi",
@@ -435,5 +435,14 @@
   "triage.no_company": "firma nie podana",
   "triage.all_done": "Wszystko przejrzane.",
   "landing.privacy.t5": "Alerty czyta model",
-  "landing.privacy.d5": "Treść przekierowanych alertów trafia do Google Gemini, żeby wyciągnąć z niej stanowisko, firmę, miasto i widełki. Idą tam same alerty z portali — nigdy odpowiedzi pracodawców, notatki ani CV. Każde pole wraca sprawdzone: jeśli nie ma go dosłownie w mailu, jest wyrzucane."
+  "landing.privacy.d5": "Treść przekierowanych alertów trafia do Google Gemini, żeby wyciągnąć z niej stanowisko, firmę, miasto i widełki. Idą tam same alerty z portali — nigdy odpowiedzi pracodawców, notatki ani CV. Każde pole wraca sprawdzone: jeśli nie ma go dosłownie w mailu, jest wyrzucane.",
+  "landing.stats.paid": "rozbicie na wersje CV — w planie Plus",
+  "mail.nudge.subject": "{company} — {why}",
+  "mail.nudge.body": "{company}, {role}.\n{why}.\n\n{url}\n\n—\nTo jedyna wiadomość o tym zgłoszeniu. Offerly nie przypomina dwa razy o tym samym.\nPrzypomnienia wyłączysz w ustawieniach konta.",
+  "mail.summary.subject": "Na ten tydzień: {count}",
+  "mail.summary.body": "{lines}\n\n{url}\n\n—\nPodsumowanie przychodzi w poniedziałki i tylko wtedy, gdy jest o czym pisać.\nWyłączysz je w ustawieniach konta.",
+  "mail.summary.line": "• {company}, {role} — {why}",
+  "account.reminders_title": "Przypomnienia",
+  "account.reminders_body": "Mail, kiedy coś się zamyka albo długo milczy, i podsumowanie w poniedziałek. O jednym zgłoszeniu piszemy raz.",
+  "account.reminders_toggle": "Wysyłaj przypomnienia"
 }

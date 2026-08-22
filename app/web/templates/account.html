@@ -85,6 +85,21 @@
   </section>
 
   <section class="card">
+    <h2>{{ t('account.reminders_title') }}</h2>
+    <p class="muted" style="font-size:13.5px;margin:0">{{ t('account.reminders_body') }}</p>
+    {# Its own form: submitting the language form must not be able to switch
+       the mails off as a side effect of an unchecked box. #}
+    <form method="post" action="/account/reminders" class="row">
+      <label class="row" style="gap:8px">
+        <input type="checkbox" name="reminders_enabled" value="1"
+               {% if reminders_enabled %}checked{% endif %}>
+        <span style="font-size:13.5px">{{ t('account.reminders_toggle') }}</span>
+      </label>
+      <button class="btn btn-secondary btn-sm" type="submit">{{ t('action.save') }}</button>
+    </form>
+  </section>
+
+  <section class="card">
     <h2>{{ t('account.close_title') }}</h2>
     <p class="muted" style="margin:0;font-size:13.5px;max-width:62ch">{{ t('account.close_body') }}</p>
     <form method="post" action="/account/delete" class="stack" style="gap:12px"

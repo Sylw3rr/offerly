@@ -7,6 +7,7 @@ rather than a loss.
 
 import csv
 import io
+import logging
 
 from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -18,6 +19,8 @@ from app.config import get_settings
 from app.db import repositories as repo
 from app.i18n import LANG_COOKIE, SUPPORTED, template_globals
 from app.web.templates import render
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["account"])
 
@@ -85,20 +88,36 @@ def account(request: Request, user: CurrentUser = Depends(require_user)):
             "plan": plans.for_profile(profile),
             "plan_until": profile.get("plan_until"),
             "is_plus": plans.for_profile(profile).name == plans.PLUS,
+            # The flag rather than the whole profile: that row carries the
+            # forwarding token, which is the address's secret and has no
+            # business being reachable from every expression in the template.
+            "reminders_enabled": profile.get("reminders_enabled", True),
         },
     )
 
 
 @router.post("/account/preferences")
 def save_preferences(lang: str = Form("pl"), user: CurrentUser = Depends(require_user)):
-    """Interface language, kept in a cookie rather than a column.
+    """Interface language: a cookie for the browser, a column for the jobs.
 
-    It is a display preference, not part of the record, and a cookie means the
-    sign-in screen can already be in the right language before there is anyone
-    to look a profile up for.
+    The cookie means the sign-in screen can already be in the right language
+    before there is anyone to look a profile up for. The column means a
+    reminder written by a nightly job is in the same language as the app.
     """
     response = RedirectResponse("/account", status_code=303)
     if lang in SUPPORTED:
+        # Written to the account as well as the cookie. The cookie renders the
+        # page; the column is what a scheduled job reads at four in the morning
+        # when there is no browser to ask.
+        #
+        # The cookie is set either way. Someone clicking "English" wants this
+        # page in English, and failing that because a column could not be
+        # written would be trading the thing they asked for against the thing
+        # a mail needs next week.
+        try:
+            repo.set_language(user.access_token, user.id, lang)
+        except Exception:  # noqa: BLE001 — the preference still applies
+            log.warning("could not record the language for %s", user.id, exc_info=True)
         response.set_cookie(
             LANG_COOKIE,
             lang,
@@ -108,6 +127,19 @@ def save_preferences(lang: str = Form("pl"), user: CurrentUser = Depends(require
             path="/",
         )
     return response
+
+
+@router.post("/account/reminders")
+def save_reminders(reminders_enabled: str = Form(""), user: CurrentUser = Depends(require_user)):
+    """The switch for the only mail Offerly sends.
+
+    An unchecked checkbox is simply absent from the form, so the presence of
+    the field is the value — which is also why this is its own form rather than
+    a field on the language one: submitting that form must not silently switch
+    reminders off.
+    """
+    repo.set_reminders(user.access_token, user.id, bool(reminders_enabled))
+    return RedirectResponse("/account", status_code=303)
 
 
 @router.get("/account/applications.csv")
@@ -180,6 +212,10 @@ def delete_account(
                 "plan": plans.for_profile(profile),
                 "plan_until": profile.get("plan_until"),
                 "is_plus": plans.for_profile(profile).name == plans.PLUS,
+                # The flag rather than the whole profile: that row carries the
+                # forwarding token, which is the address's secret and has no
+                # business being reachable from every expression in the template.
+                "reminders_enabled": profile.get("reminders_enabled", True),
             },
             status_code=400,
         )

@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     # work that a larger model does better.
     gemini_model: str = "gemini-2.0-flash"
 
+    # Outbound mail. Empty means reminders are computed but never sent, which
+    # is the correct behaviour everywhere except production.
+    resend_api_key: str = ""
+    mail_from: str = ""
+
+    @property
+    def mail_enabled(self) -> bool:
+        return bool(self.resend_api_key and self.mail_from)
+
     @property
     def ai_enabled(self) -> bool:
         return bool(self.anthropic_api_key or self.gemini_api_key)
